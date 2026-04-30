@@ -1,0 +1,12 @@
+package com.example.animalservice.repository;
+
+import com.example.animalservice.model.Booking;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface BookingRepository extends JpaRepository<Booking, Integer> {
+
+    // Get bookings by farmer email
+    List<Booking> findByFarmerEmail(String farmerEmail);
+}
