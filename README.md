@@ -1,123 +1,86 @@
-# animal1
+# 🐄 Integrated Animal Service Platform for Smart Welfare
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-
- 🐄 Integrated Animal Service Platform for Smart Welfare
-
-📌 Project Overview
-
-The Animal Service Platform is a full-stack application designed to help farmers and rural users access animal healthcare and agricultural services digitally.
-It connects users with service providers such as veterinarians and enables efficient management of animal health and services.
+The Animal Service Platform is a full-stack solution designed to bridge the gap between farmers and veterinary service providers. It offers real-time booking, GPS-based tracking, professional profile management, and a comprehensive animal healthcare system.
 
 ---
 
-🚀 Tech Stack
+## 🚀 Tech Stack
 
-* 📱 Frontend: Flutter
-* ☕ Backend: Spring Boot (Java)
-* 🗄️ Database: MySQL
-* 🔗 API Testing: Postman
-
----
-
- 📁 Project Structure
-
-* `android/`, `lib/`, etc → Flutter frontend
-* `backend/animalservice/` → Spring Boot backend
-* `database/animal_service.sql` → Database file
-* `postman/` → API collection
+*   **📱 Frontend**: Flutter (Web & Mobile)
+*   **☕ Backend**: Spring Boot (Java 17+)
+*   **🗄️ Database**: Supabase (PostgreSQL)
+*   **📍 Maps**: Google Maps API
+*   **🔗 Connection**: REST APIs with SSL support
 
 ---
 
- ⚙️ Features
+## 📁 Project Structure
 
-* User Registration & Login
-* Animal Health Management
-* Veterinary Service Booking
-* Service Provider Listing
-* Database Storage & Retrieval
-* REST API Integration
+*   `/lib` → Flutter frontend logic & UI components
+*   `/backend/animalservice` → Spring Boot backend source code
+*   `/database` → SQL migration scripts and schemas
+*   `/assets` → Static images and icons
 
 ---
 
- 🛠️ How to Run the Project
+## 🛠️ Getting Started (How to Run)
 
-📱 1. Run Frontend (Flutter)
+### 1. 🗄️ Database Setup (Supabase)
+The project is already configured to use a cloud-hosted Supabase PostgreSQL instance. If you need to set up a new one:
+1. Create a new project in [Supabase](https://supabase.com/).
+2. Run the SQL script found in `database/animal_service.sql` in the Supabase SQL Editor.
+3. Obtain your JDBC connection string from the Supabase Settings.
 
-flutter pub get
-flutter run
+### 2. ☕ Run the Backend (Spring Boot)
+1. Navigate to the backend directory:
+   ```bash
+   cd backend/animalservice
+   ```
+2. Ensure your `.env` file in the backend root has the correct credentials:
+   ```env
+   DB_URL=jdbc:postgresql://db.mosatjxgsidunjvtpsku.supabase.co:5432/postgres?sslmode=require
+   DB_USERNAME=postgres
+   DB_PASSWORD=YOUR_PASSWORD
+   GOOGLE_MAPS_API_KEY=YOUR_KEY
+   ```
+3. Run the application:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+   *The backend will start on `http://localhost:8080`*
 
----
-
- ☕ 2. Run Backend (Spring Boot)
-
-* Open `backend/animalservice` in IntelliJ
-* Run: `AnimalserviceApplication.java`
-
----
-
-🗄️ 3. Setup Database
-
-1. Open MySQL Workbench
-2. Create database:
-   animal_service_db
-3. Import file:
-   database/animal_service.sql
-
----
-
-🔗 4. Configure Backend
-
-Update `application.properties`:
-
-spring.datasource.url=jdbc:mysql://localhost:3306/animal_service_db
-spring.datasource.username=root
-spring.datasource.password=YOUR_PASSWORD
-
----
-📡 5. API Usage
-
-* Backend runs on:
-  http://localhost:8080
-
-* For Android Emulator use:
-  http://10.0.2.2:8080
+### 3. 📱 Run the Frontend (Flutter)
+1. Navigate to the project root.
+2. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+3. Run the app (Web/Chrome is recommended for testing):
+   ```bash
+   flutter run -d chrome --web-renderer html
+   ```
+   *Note: Using `--web-renderer html` is required for proper Google Maps rendering.*
 
 ---
 
-🧪 6. Postman Testing
+## ⚙️ Core Features
 
-1. Open Postman
+*   **👨‍🌾 Farmer Dashboard**: View nearby vets on an interactive map, book appointments, and track animal vaccination records.
+*   **👨‍⚕️ Doctor Dashboard**: Manage upcoming schedules, chat with patients, prescribe medications, and update professional profile.
+*   **📍 GPS Integration**: Real-time location detection for doctors and farmers.
+*   **💬 Consultation System**: Integrated chat, prescription management, and service fee tracking.
+*   **⭐ Rating System**: Farmers can rate and review veterinary services after consultations.
 
-2. Click on **Import**
+---
 
-3. Select file from:
-   `postman/My Collection.postman_collection.json`
+## 📡 API Endpoints
 
-4. After importing, you can test APIs like:
+*   **Auth**: `POST /api/service-provider/login`, `POST /api/service-provider/register`
+*   **Providers**: `GET /api/service-provider/providers`, `PUT /api/service-provider/update`
+*   **Bookings**: `POST /api/bookings/create`, `GET /api/bookings/provider/{email}`
+*   **Reviews**: `POST /api/reviews`, `GET /api/reviews/provider/{id}/rating`
 
-   * GET all service providers
-   * POST booking
-   * GET bookings
+---
 
-5. Make sure backend is running on:
-   `http://localhost:8080`
-
-
-
-This project provides a scalable and efficient digital solution for livestock management and animal welfare, improving accessibility and service delivery for rural users.
+## 🧪 Testing
+You can import the Postman collection located in `postman/My Collection.postman_collection.json` to test the REST endpoints independently of the UI.

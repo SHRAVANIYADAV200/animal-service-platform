@@ -9,4 +9,13 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
     // Get bookings by farmer email
     List<Booking> findByFarmerEmail(String farmerEmail);
+
+    // Get bookings by provider email
+    List<Booking> findByProviderEmail(String providerEmail);
+
+    // Get bookings by status
+    List<Booking> findByStatus(String status);
+
+    // Count by status
+    long countByStatus(String status);
 }
