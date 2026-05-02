@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
+import 'medical_history_screen.dart';
+import 'receipt_screen.dart';
+import 'package:intl/intl.dart';
 
 class ConsultationDetailScreen extends StatefulWidget {
   final Map booking;
@@ -17,6 +21,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
   List<Map> charges = [];
   double totalCharge = 0;
   bool isLoading = false;
+  Timer? _timer;
 
   final TextEditingController _msgController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -33,21 +38,28 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
   void initState() {
     super.initState();
     _loadNotes();
+    // Poll for new messages/notes every 5 seconds
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) => _loadNotes(isPolling: true));
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _msgController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadNotes() async {
+  Future<void> _loadNotes({bool isPolling = false}) async {
     if (_bookingId == 0) return;
-    setState(() => isLoading = true);
+    if (!isPolling) setState(() => isLoading = true);
     try {
       final notes = await ApiService.getConsultationNotes(_bookingId);
       if (!mounted) return;
+
+      // If nothing changed, don't rebuild
+      if (isPolling && notes.length == (messages.length + medications.length + charges.length)) return;
+
       final msgs = <Map>[];
       final meds = <Map>[];
       final chgs = <Map>[];
@@ -69,10 +81,10 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
         medications = meds;
         charges = chgs;
         totalCharge = total;
-        isLoading = false;
+        if (!isPolling) isLoading = false;
       });
     } catch (e) {
-      if (mounted) setState(() => isLoading = false);
+      if (!isPolling && mounted) setState(() => isLoading = false);
     }
   }
 
@@ -247,7 +259,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         backgroundColor: AppTheme.backgroundColor,
         appBar: AppBar(
@@ -263,10 +275,38 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               ),
             ],
           ),
+          actions: [
+            if (_isDoctor)
+              IconButton(
+                icon: const Icon(Icons.history, color: AppTheme.primaryColor),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => MedicalHistoryScreen(farmerEmail: widget.booking['farmerEmail'])),
+                ),
+                tooltip: "Medical History",
+              ),
+            IconButton(
+              icon: const Icon(Icons.receipt_long_outlined, color: AppTheme.primaryColor),
+              tooltip: "View Bill",
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ReceiptScreen(
+                    booking: widget.booking,
+                    medications: medications,
+                    charges: charges,
+                    totalCharge: totalCharge,
+                  ),
+                ),
+              ),
+            ),
+          ],
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
               Tab(icon: Icon(Icons.chat_bubble_outline, size: 18), text: 'Chat'),
               Tab(icon: Icon(Icons.medication_outlined, size: 18), text: 'Medical'),
+              Tab(icon: Icon(Icons.shield_outlined, size: 18), text: 'Vaccination'),
               Tab(icon: Icon(Icons.healing_outlined, size: 18), text: 'First Aid'),
             ],
             indicatorColor: AppTheme.primaryColor,
@@ -278,7 +318,188 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
           children: [
             _chatTab(),
             _medicalTab(),
+            _vaccinationTab(),
             _firstAidTab(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── VACCINATION ────────────────────────
+  List _vaccinations = [];
+  bool _loadingVaccines = false;
+
+  Future<void> _loadVaccinations() async {
+    final email = widget.booking['farmerEmail'];
+    if (email == null) return;
+    setState(() => _loadingVaccines = true);
+    final data = await ApiService.getFarmerVaccinations(email);
+    if (mounted) {
+      setState(() {
+        _vaccinations = data;
+        _loadingVaccines = false;
+      });
+    }
+  }
+
+  Widget _vaccinationTab() {
+    if (_vaccinations.isEmpty && !_loadingVaccines) {
+      _loadVaccinations();
+    }
+    return Column(
+      children: [
+        Expanded(
+          child: _loadingVaccines
+              ? const Center(child: CircularProgressIndicator())
+              : _vaccinations.isEmpty
+                  ? Center(child: Text("No vaccination history", style: TextStyle(color: Colors.grey.shade400)))
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _vaccinations.length,
+                      itemBuilder: (context, index) => _vaccineSmallCard(_vaccinations[index]),
+                    ),
+        ),
+        if (_isDoctor)
+          SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.white,
+              child: ElevatedButton.icon(
+                onPressed: _showAddVaccineDialog,
+                icon: const Icon(Icons.add),
+                label: const Text("Record Vaccination / Reminder"),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _vaccineSmallCard(Map v) {
+    bool isUpcoming = v['status'] == "UPCOMING";
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isUpcoming ? Colors.orange.withOpacity(0.3) : Colors.grey.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.shield, color: isUpcoming ? Colors.orange : Colors.green, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("${v['animalName']} - ${v['vaccineName']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(
+                  isUpcoming ? "Reminder for: ${v['nextDueDate']}" : "Given on: ${v['dateGiven']}",
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          if (isUpcoming)
+            const Icon(Icons.alarm, color: Colors.orange, size: 16),
+        ],
+      ),
+    );
+  }
+
+  void _showAddVaccineDialog() {
+    final animalCtrl = TextEditingController();
+    final vaccineCtrl = TextEditingController();
+    final dateCtrl = TextEditingController();
+    final nextDueCtrl = TextEditingController();
+    String selectedStatus = "COMPLETED";
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("New Vaccination / Reminder"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selectedStatus,
+                  items: const [
+                    DropdownMenuItem(value: "COMPLETED", child: Text("Administered Today")),
+                    DropdownMenuItem(value: "UPCOMING", child: Text("Set Future Reminder")),
+                  ],
+                  onChanged: (v) => setDialogState(() => selectedStatus = v!),
+                  decoration: const InputDecoration(labelText: "Type"),
+                ),
+                const SizedBox(height: 12),
+                TextField(controller: animalCtrl, decoration: const InputDecoration(labelText: "Animal Name")),
+                const SizedBox(height: 12),
+                TextField(controller: vaccineCtrl, decoration: const InputDecoration(labelText: "Vaccine Name")),
+                const SizedBox(height: 12),
+                if (selectedStatus == "COMPLETED")
+                  ListTile(
+                    title: Text("Date Given: ${dateCtrl.text.isEmpty ? 'Today' : dateCtrl.text}"),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setDialogState(() => dateCtrl.text = picked.toString().split(' ')[0]);
+                      }
+                    },
+                  ),
+                const SizedBox(height: 12),
+                ListTile(
+                  title: Text(selectedStatus == "UPCOMING" ? "Reminder Date: ${nextDueCtrl.text}" : "Next Due Date: ${nextDueCtrl.text.isEmpty ? 'Not set' : nextDueCtrl.text}"),
+                  trailing: const Icon(Icons.alarm),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now().add(const Duration(days: 180)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => nextDueCtrl.text = picked.toString().split(' ')[0]);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: () async {
+                if (animalCtrl.text.isNotEmpty && vaccineCtrl.text.isNotEmpty) {
+                  await ApiService.addVaccinationRecord(
+                    farmerEmail: widget.booking['farmerEmail'],
+                    animal: animalCtrl.text,
+                    vaccine: vaccineCtrl.text,
+                    status: selectedStatus,
+                    dateGiven: selectedStatus == "COMPLETED" ? (dateCtrl.text.isEmpty ? DateTime.now().toString().split(' ')[0] : dateCtrl.text) : null,
+                    nextDueDate: nextDueCtrl.text.isEmpty ? null : nextDueCtrl.text,
+                    providerEmail: _user['email'],
+                  );
+                  Navigator.pop(context);
+                  _loadVaccinations();
+                }
+              },
+              child: const Text("Save"),
+            ),
           ],
         ),
       ),

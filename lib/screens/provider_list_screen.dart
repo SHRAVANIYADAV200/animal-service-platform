@@ -13,7 +13,8 @@ class ProviderListScreen extends StatefulWidget {
 }
 
 class _ProviderListScreenState extends State<ProviderListScreen> {
-  List providers = [];
+  List allProviders = [];
+  List filteredProviders = [];
   String filterType = "All";
   bool isLoading = true;
 
@@ -25,17 +26,25 @@ class _ProviderListScreenState extends State<ProviderListScreen> {
 
   void loadProviders() async {
     setState(() => isLoading = true);
-    List data;
-    if (filterType == "All") {
-      data = await ApiService.getAllProviders();
-    } else {
-      data = await ApiService.getProvidersByType(filterType.toUpperCase());
-    }
+    final data = await ApiService.getAllProviders();
     if (mounted) {
       setState(() {
-        providers = data;
+        allProviders = data;
+        _applyFilter();
         isLoading = false;
       });
+    }
+  }
+
+  void _applyFilter() {
+    if (filterType == "All") {
+      filteredProviders = allProviders;
+    } else {
+      filteredProviders = allProviders.where((p) {
+        // If doctorType is null, we default to PRIVATE to match the UI fallback
+        String type = (p['doctorType'] ?? "PRIVATE").toString().toUpperCase();
+        return type == filterType.toUpperCase();
+      }).toList();
     }
   }
 
@@ -59,8 +68,10 @@ class _ProviderListScreenState extends State<ProviderListScreen> {
                     label: Text(type),
                     selected: isSelected,
                     onSelected: (v) {
-                      setState(() => filterType = type);
-                      loadProviders();
+                      setState(() {
+                        filterType = type;
+                        _applyFilter();
+                      });
                     },
                     selectedColor: AppTheme.primaryColor,
                     labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
@@ -72,12 +83,12 @@ class _ProviderListScreenState extends State<ProviderListScreen> {
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : providers.isEmpty
+                : filteredProviders.isEmpty
                     ? _emptyState()
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: providers.length,
-                        itemBuilder: (context, index) => _providerCard(providers[index]),
+                        itemCount: filteredProviders.length,
+                        itemBuilder: (context, index) => _providerCard(filteredProviders[index]),
                       ),
           ),
         ],

@@ -47,6 +47,7 @@ class DoctorDetailScreen extends StatelessWidget {
       pinned: true,
       backgroundColor: AppTheme.primaryColor,
       flexibleSpace: FlexibleSpaceBar(
+        title: Text(doctor['name'], style: const TextStyle(color: Colors.white, fontSize: 16)),
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -117,7 +118,7 @@ class DoctorDetailScreen extends StatelessWidget {
         const Text("About Doctor", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         Text(
-          doctor['description'] ?? "Dr. ${doctor['name']} is a highly experienced veterinary specialist dedicated to the well-being of livestock and pets. With over 10 years of experience, they specialize in general surgery and emergency care.",
+          doctor['description'] ?? "No bio provided.",
           style: TextStyle(color: Colors.grey.shade700, height: 1.6),
         ),
       ],
@@ -134,11 +135,11 @@ class DoctorDetailScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _infoTile(Icons.storefront_outlined, "Clinic Name", doctor['clinicName'] ?? "Central Vet Clinic"),
+          _infoTile(Icons.storefront_outlined, "Clinic Name", doctor['clinicName'] ?? "Clinic"),
           const Divider(height: 32),
-          _infoTile(Icons.location_on_outlined, "Location", "Pune, Maharashtra"),
+          _infoTile(Icons.location_on_outlined, "Location", doctor['district'] ?? "Not set"),
           const Divider(height: 32),
-          _infoTile(Icons.access_time, "Working Hours", "09:00 AM - 06:00 PM"),
+          _infoTile(Icons.access_time, "Working Hours", doctor['workingHours'] ?? "Not set"),
         ],
       ),
     );
@@ -217,25 +218,68 @@ class DoctorDetailScreen extends StatelessWidget {
       return;
     }
 
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+      helpText: "SELECT APPOINTMENT DATE",
+    );
+
+    if (selectedDate == null) return;
+
+    TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 9, minute: 0),
+      helpText: "SELECT APPOINTMENT TIME",
+    );
+
+    if (selectedTime == null) return;
+
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    await ApiService.createBooking(user['email'], "Consultation with ${doctor['name']}");
+    final dateStr = selectedDate.toString().split(' ')[0];
+    final timeStr = "${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')} ${selectedTime.period == DayPeriod.am ? 'AM' : 'PM'}";
+
+    await ApiService.createBooking(
+      user['email'], 
+      "Consultation",
+      providerEmail: doctor['email'],
+      date: dateStr,
+      time: timeStr,
+    );
     
     if (context.mounted) {
       Navigator.pop(context); // Close loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Appointment requested successfully!"),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Icon(Icons.check_circle, color: Colors.green, size: 60),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Appointment Requested!", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              Text("Your request has been sent to ${doctor['name']}. You will be notified once they accept."),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            ),
+          ],
         ),
       );
-      Navigator.pop(context); // Go back to list
     }
   }
 }

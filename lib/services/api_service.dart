@@ -96,17 +96,18 @@ class ApiService {
   }
 
   // 📅 BOOKINGS
-  static Future<void> createBooking(String email, String serviceType) async {
+  static Future<void> createBooking(String email, String serviceType, {String? providerEmail, String? date, String? time}) async {
     try {
       await http.post(
         Uri.parse("$baseUrl/bookings/create"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "farmerEmail": email,
+          "providerEmail": providerEmail,
           "serviceType": serviceType,
           "status": "PENDING",
-          "appointmentDate": DateTime.now().toString().split(' ')[0],
-          "appointmentTime": "09:00 AM",
+          "appointmentDate": date ?? DateTime.now().toString().split(' ')[0],
+          "appointmentTime": time ?? "09:00 AM",
         }),
       );
     } catch (e) {
@@ -209,17 +210,27 @@ class ApiService {
   }
 
   // 💉 VACCINATIONS
-  static Future<void> addVaccinationRecord(String email, String animal, String vaccine, String date) async {
+  static Future<void> addVaccinationRecord({
+    required String farmerEmail,
+    required String animal,
+    required String vaccine,
+    String? dateGiven,
+    String? nextDueDate,
+    String? status,
+    String? providerEmail,
+  }) async {
     try {
       await http.post(
         Uri.parse("$baseUrl/vaccinations"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "farmerEmail": email,
+          "farmerEmail": farmerEmail,
           "animalName": animal,
           "vaccineName": vaccine,
-          "dateGiven": date,
-          "nextDueDate": DateTime.parse(date).add(const Duration(days: 180)).toString().split(' ')[0],
+          "dateGiven": dateGiven,
+          "nextDueDate": nextDueDate ?? (dateGiven != null ? DateTime.parse(dateGiven).add(const Duration(days: 180)).toString().split(' ')[0] : null),
+          "status": status ?? "COMPLETED",
+          "providerEmail": providerEmail,
         }),
       );
     } catch (e) {

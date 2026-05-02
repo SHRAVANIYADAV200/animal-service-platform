@@ -15,7 +15,9 @@ public class VaccinationService {
     private VaccinationRepository repository;
 
     public VaccinationRecord addRecord(VaccinationRecord record) {
-        record.setStatus("COMPLETED");
+        if (record.getStatus() == null || record.getStatus().isEmpty()) {
+            record.setStatus("COMPLETED");
+        }
         return repository.save(record);
     }
 

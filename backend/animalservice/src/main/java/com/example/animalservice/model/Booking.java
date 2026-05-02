@@ -16,6 +16,7 @@ public class Booking {
     private String serviceType;
     private String status;
     private String appointmentTime;
+    private String appointmentDate;
 
     // New fields for provider history
     @Column(columnDefinition = "TEXT")
@@ -46,6 +47,9 @@ public class Booking {
 
     public String getAppointmentTime() { return appointmentTime; }
     public void setAppointmentTime(String appointmentTime) { this.appointmentTime = appointmentTime; }
+
+    public String getAppointmentDate() { return appointmentDate; }
+    public void setAppointmentDate(String appointmentDate) { this.appointmentDate = appointmentDate; }
 
     public String getTreatmentNotes() { return treatmentNotes; }
     public void setTreatmentNotes(String treatmentNotes) { this.treatmentNotes = treatmentNotes; }

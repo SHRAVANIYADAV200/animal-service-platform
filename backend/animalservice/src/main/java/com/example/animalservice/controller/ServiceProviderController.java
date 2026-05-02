@@ -83,6 +83,10 @@ public class ServiceProviderController {
             existing.setConsultationFee(updatedProvider.getConsultationFee());
             existing.setLatitude(updatedProvider.getLatitude());
             existing.setLongitude(updatedProvider.getLongitude());
+            existing.setDoctorType(updatedProvider.getDoctorType());
+            existing.setDescription(updatedProvider.getDescription());
+            existing.setWorkingHours(updatedProvider.getWorkingHours());
+            existing.setDistrict(updatedProvider.getDistrict());
             return service.save(existing);
         }
         return null;

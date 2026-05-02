@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
-import 'package:intl/intl.dart';
 import 'consultation_detail_screen.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class ProviderScheduleTab extends StatefulWidget {
   const ProviderScheduleTab({super.key});
@@ -14,7 +14,9 @@ class ProviderScheduleTab extends StatefulWidget {
 
 class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
   DateTime selectedDate = DateTime.now();
-  List bookings = [];
+  DateTime focusedDate = DateTime.now();
+  List allBookings = [];
+  List filteredBookings = [];
   bool isLoading = true;
   bool isAvailable = true;
 
@@ -31,15 +33,23 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
 
     final bData = await ApiService.getProviderBookings(email);
     // Filter by accepted status
-    final filtered = bData.where((b) => b['status'] == "ACCEPTED").toList();
+    final accepted = bData.where((b) => b['status'] == "ACCEPTED").toList();
     
     if (mounted) {
       setState(() {
-        bookings = filtered;
+        allBookings = accepted;
         isAvailable = user?['isAvailable'] ?? true;
+        _filterBookings();
         isLoading = false;
       });
     }
+  }
+
+  void _filterBookings() {
+    final dateStr = selectedDate.toString().split(' ')[0];
+    setState(() {
+      filteredBookings = allBookings.where((b) => b['appointmentDate'] == dateStr).toList();
+    });
   }
 
   @override
@@ -49,16 +59,16 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
       body: Column(
         children: [
           _buildHeader(),
-          _buildCalendarStrip(),
+          _buildCalendar(),
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : bookings.isEmpty
+                : filteredBookings.isEmpty
                     ? _buildEmptyState()
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: bookings.length,
-                        itemBuilder: (context, index) => _buildScheduleItem(bookings[index]),
+                        itemCount: filteredBookings.length,
+                        itemBuilder: (context, index) => _buildScheduleItem(filteredBookings[index]),
                       ),
           ),
         ],
@@ -68,7 +78,7 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 20),
+      padding: const EdgeInsets.fromLTRB(24, 60, 24, 10),
       color: Colors.white,
       child: Column(
         children: [
@@ -95,7 +105,7 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
             children: [
               Icon(Icons.circle, size: 10, color: isAvailable ? Colors.green : Colors.grey),
               const SizedBox(width: 8),
-              Text(isAvailable ? "Available for new requests" : "Currently Busy", 
+              Text(isAvailable ? "Online - Visible on Map" : "Offline - Hidden from Map", 
                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
             ],
           ),
@@ -104,39 +114,31 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
     );
   }
 
-  Widget _buildCalendarStrip() {
+  Widget _buildCalendar() {
     return Container(
-      height: 100,
       color: Colors.white,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 7,
-        itemBuilder: (context, index) {
-          DateTime date = DateTime.now().add(Duration(days: index));
-          bool isSelected = date.day == selectedDate.day;
-          
-          return GestureDetector(
-            onTap: () => setState(() => selectedDate = date),
-            child: Container(
-              width: 60,
-              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primaryColor : Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(DateFormat('E').format(date), 
-                       style: TextStyle(color: isSelected ? Colors.white70 : Colors.grey, fontSize: 12)),
-                  Text(date.day.toString(), 
-                       style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          );
+      child: TableCalendar(
+        firstDay: DateTime.now().subtract(const Duration(days: 365)),
+        lastDay: DateTime.now().add(const Duration(days: 365)),
+        focusedDay: focusedDate,
+        selectedDayPredicate: (day) => isSameDay(selectedDate, day),
+        onDaySelected: (selected, focused) {
+          setState(() {
+            selectedDate = selected;
+            focusedDate = focused;
+            _filterBookings();
+          });
         },
+        calendarFormat: CalendarFormat.week,
+        headerStyle: const HeaderStyle(
+          formatButtonVisible: false,
+          titleCentered: true,
+          titleTextStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        calendarStyle: CalendarStyle(
+          selectedDecoration: const BoxDecoration(color: AppTheme.primaryColor, shape: BoxShape.circle),
+          todayDecoration: BoxDecoration(color: AppTheme.primaryColor.withOpacity(0.3), shape: BoxShape.circle),
+        ),
       ),
     );
   }

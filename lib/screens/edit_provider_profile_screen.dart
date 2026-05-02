@@ -23,6 +23,10 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
   final TextEditingController _feeController = TextEditingController();
   final TextEditingController _latController = TextEditingController();
   final TextEditingController _lngController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _workingHoursController = TextEditingController();
+  final TextEditingController _districtController = TextEditingController();
+  String _doctorType = "PRIVATE";
 
   @override
   void initState() {
@@ -43,6 +47,10 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
           _feeController.text = (profile['consultationFee'] ?? 0.0).toString();
           _latController.text = (profile['latitude'] ?? 0.0).toString();
           _lngController.text = (profile['longitude'] ?? 0.0).toString();
+          _descriptionController.text = profile['description'] ?? "";
+          _workingHoursController.text = profile['workingHours'] ?? "";
+          _districtController.text = profile['district'] ?? "";
+          _doctorType = profile['doctorType'] ?? "PRIVATE";
           isLoading = false;
         });
       }
@@ -88,6 +96,10 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
       "consultationFee": double.tryParse(_feeController.text) ?? 0.0,
       "latitude": double.tryParse(_latController.text) ?? 0.0,
       "longitude": double.tryParse(_lngController.text) ?? 0.0,
+      "description": _descriptionController.text,
+      "workingHours": _workingHoursController.text,
+      "doctorType": _doctorType,
+      "district": _districtController.text,
     };
 
     final success = await ApiService.updateProviderProfile(updatedData);
@@ -128,6 +140,24 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
                     _buildTextField(_specializationController, "Specialization", Icons.medical_services_outlined),
                     _buildTextField(_clinicController, "Clinic/Hospital Name", Icons.local_hospital_outlined),
                     _buildTextField(_phoneController, "Contact Number", Icons.phone_outlined, keyboardType: TextInputType.phone),
+                    _buildTextField(_districtController, "District / City", Icons.location_city_outlined),
+                    _buildTextField(_descriptionController, "About Me / Bio", Icons.info_outline, maxLines: 3),
+                    _buildTextField(_workingHoursController, "Working Hours (e.g. 9AM - 6PM)", Icons.access_time),
+                    
+                    DropdownButtonFormField<String>(
+                      value: _doctorType,
+                      decoration: InputDecoration(
+                        labelText: "Provider Type",
+                        prefixIcon: const Icon(Icons.category_outlined, color: AppTheme.primaryColor),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: "PRIVATE", child: Text("Private")),
+                        DropdownMenuItem(value: "GOVERNMENT", child: Text("Government")),
+                        DropdownMenuItem(value: "NGO", child: Text("NGO")),
+                      ],
+                      onChanged: (v) => setState(() => _doctorType = v!),
+                    ),
                     
                     const SizedBox(height: 24),
                     _buildSectionHeader("Service Details"),
@@ -185,13 +215,15 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
     TextEditingController controller, 
     String label, 
     IconData icon, {
-    TextInputType keyboardType = TextInputType.text
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: AppTheme.primaryColor),

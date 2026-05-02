@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/session.dart';
 import '../services/api_service.dart';
@@ -7,6 +8,7 @@ import 'profile_screen.dart';
 import 'consultation_detail_screen.dart';
 import 'provider_schedule_tab.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'medical_history_screen.dart';
 
 class ServiceProviderDashboard extends StatefulWidget {
   const ServiceProviderDashboard({super.key});
@@ -59,11 +61,20 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
   List bookings = [];
   Map stats = {"total": 0, "pending": 0, "accepted": 0, "rejected": 0};
   bool isLoading = true;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     loadData();
+    // Real-time updates every 10 seconds
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) => loadData());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   void loadData() async {
@@ -197,7 +208,14 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
                   ),
                 ),
                 if (b['status'] == "ACCEPTED")
-                  const Icon(Icons.chevron_right, color: Colors.grey, size: 20)
+                  IconButton(
+                    icon: const Icon(Icons.history, color: AppTheme.primaryColor, size: 22),
+                    tooltip: "Medical History",
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MedicalHistoryScreen(farmerEmail: b['farmerEmail'])),
+                    ),
+                  )
                 else
                   IconButton(
                     icon: const Icon(Icons.phone_outlined, color: AppTheme.primaryColor, size: 20),

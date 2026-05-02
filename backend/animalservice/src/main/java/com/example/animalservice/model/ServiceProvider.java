@@ -28,6 +28,9 @@ public class ServiceProvider {
     private String district;
     private String registrationNumber;
     private Double avgRating;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    private String workingHours;
 
     // Getters & Setters
     public int getId() { return id; }
@@ -80,4 +83,10 @@ public class ServiceProvider {
 
     public Double getAvgRating() { return avgRating; }
     public void setAvgRating(Double avgRating) { this.avgRating = avgRating; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getWorkingHours() { return workingHours; }
+    public void setWorkingHours(String workingHours) { this.workingHours = workingHours; }
 }
