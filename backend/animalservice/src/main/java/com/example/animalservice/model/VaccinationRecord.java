@@ -19,6 +19,7 @@ public class VaccinationRecord {
     private LocalDate nextDueDate;
     private String status; // COMPLETED, UPCOMING, OVERDUE
     private String providerEmail;
+    private String notes;
 
     // Getters & Setters
     public int getId() { return id; }
@@ -47,4 +48,7 @@ public class VaccinationRecord {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }

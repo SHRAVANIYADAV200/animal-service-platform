@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import 'register_screen.dart';
 import 'farmer_screen.dart';
 import 'service_provider_dashboard.dart';
 import '../services/api_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_switcher.dart';
+import 'otp_verification_screen.dart';
+import '../services/notification_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,41 +26,60 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Top Section with simple illustration placeholder or logo
             Container(
               height: 300,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: AppTheme.primaryColor.withOpacity(0.05),
-                borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(80)),
+                borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(80)),
               ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 40),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)],
-                      ),
-                      child: const Icon(Icons.pets, size: 60, color: AppTheme.primaryColor),
+              child: Stack(
+                children: [
+                  // Language switcher top right
+                  const Positioned(
+                    top: 50,
+                    right: 16,
+                    child: LanguageSwitcher(),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 40),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 20)
+                            ],
+                          ),
+                          child: const Icon(Icons.pets,
+                              size: 60, color: AppTheme.primaryColor),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(l.animalCare,
+                            style: Theme.of(context)
+                                .textTheme
+                                .displayLarge
+                                ?.copyWith(fontSize: 32)),
+                        Text(l.tagline,
+                            style: const TextStyle(
+                                color: Colors.grey, letterSpacing: 1)),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Animal Care",
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 32),
-                    ),
-                    const Text("Simple. Reliable. Effective.", style: TextStyle(color: Colors.grey, letterSpacing: 1)),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             Padding(
@@ -64,12 +87,13 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Sign In", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(l.signIn,
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  const Text("Access your account and services", style: TextStyle(color: Colors.grey)),
+                  Text(l.accessAccount,
+                      style: const TextStyle(color: Colors.grey)),
                   const SizedBox(height: 32),
-                  
-                  // Role Toggle
                   Container(
                     height: 50,
                     decoration: BoxDecoration(
@@ -78,18 +102,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Row(
                       children: [
-                        _roleTab("Farmer"),
-                        _roleTab("Service Provider"),
+                        _roleTab(l.farmer, "Farmer"),
+                        _roleTab(l.serviceProvider, "Service Provider"),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   TextField(
                     controller: emailController,
-                    decoration: const InputDecoration(
-                      hintText: "Email",
-                      prefixIcon: Icon(Icons.email_outlined, size: 20),
+                    decoration: InputDecoration(
+                      hintText: l.email,
+                      prefixIcon:
+                          const Icon(Icons.email_outlined, size: 20),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -97,29 +121,48 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: passwordController,
                     obscureText: !isPasswordVisible,
                     decoration: InputDecoration(
-                      hintText: "Password",
-                      prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                      hintText: l.password,
+                      prefixIcon:
+                          const Icon(Icons.lock_outline, size: 20),
                       suffixIcon: IconButton(
-                        icon: Icon(isPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
-                        onPressed: () => setState(() => isPasswordVisible = !isPasswordVisible),
+                        icon: Icon(
+                          isPasswordVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(
+                            () => isPasswordVisible = !isPasswordVisible),
                       ),
                     ),
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: isLoading ? null : _handleLogin,
-                    child: isLoading 
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text("Continue"),
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
+                        : Text(l.continueBtn),
                   ),
                   const SizedBox(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("New here? ", style: TextStyle(color: Colors.grey)),
+                      Text(l.newHere,
+                          style: const TextStyle(color: Colors.grey)),
                       GestureDetector(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                        child: const Text("Create Account", style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const RegisterScreen()),
+                        ),
+                        child: Text(l.createAccount,
+                            style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -132,11 +175,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _roleTab(String title) {
-    bool isSelected = role == title;
+  Widget _roleTab(String label, String value) {
+    bool isSelected = role == value;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => role = title),
+        onTap: () => setState(() => role = value),
         child: Container(
           alignment: Alignment.center,
           decoration: BoxDecoration(
@@ -144,10 +187,11 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            title,
+            label,
             style: TextStyle(
               color: isSelected ? Colors.white : Colors.grey,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontWeight:
+                  isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
         ),
@@ -156,24 +200,69 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    final l = AppLocalizations.of(context)!;
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.fillAllFields)));
       return;
     }
-
     setState(() => isLoading = true);
-    final user = await ApiService.login(emailController.text, passwordController.text);
+    final user = await ApiService.login(
+        emailController.text, passwordController.text);
     setState(() => isLoading = false);
-
     if (user != null) {
-      Session.currentUser = user;
       if (user['role'] == "Farmer") {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const FarmerScreen()));
+        Session.currentUser = user;
+        NotificationService.getTokenAndSave();
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (_) => const FarmerScreen()));
       } else {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ServiceProviderDashboard()));
+        // 🛡️ Service Provider MFA
+        setState(() => isLoading = true);
+        
+        final isMfaVerified = await Session.isMfaVerified(emailController.text);
+        
+        if (isMfaVerified) {
+          if (mounted) setState(() => isLoading = false);
+          Session.currentUser = user;
+          NotificationService.getTokenAndSave();
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const ServiceProviderDashboard()));
+          return;
+        }
+
+        final otpSent = await ApiService.sendOtp(emailController.text, "LOGIN");
+        if (mounted) setState(() => isLoading = false);
+
+        if (otpSent) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OtpVerificationScreen(
+                email: emailController.text,
+                type: "LOGIN",
+                onVerified: () async {
+                  await Session.setMfaVerified(emailController.text);
+                  Session.currentUser = user;
+                  NotificationService.getTokenAndSave();
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const ServiceProviderDashboard()));
+                },
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("MFA Verification Failed. Please try again.")));
+        }
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid credentials")));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.invalidCredentials)));
     }
   }
 }

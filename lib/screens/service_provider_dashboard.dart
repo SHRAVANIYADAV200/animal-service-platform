@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import '../services/session.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_switcher.dart';
+import '../widgets/dashboard_widgets.dart';
 import 'map_screen.dart';
 import 'profile_screen.dart';
 import 'consultation_detail_screen.dart';
@@ -20,30 +23,40 @@ class ServiceProviderDashboard extends StatefulWidget {
 class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const ProviderHomeTab(),
-    const ProviderScheduleTab(),
-    const MapScreen(),
-    const ProfileScreen(),
+  final List<Widget> _pages = const [
+    ProviderHomeTab(),
+    ProviderScheduleTab(),
+    MapScreen(),
+    ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        indicatorColor: AppTheme.primaryColor.withOpacity(0.1),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard, color: AppTheme.primaryColor), label: "Dashboard"),
-          NavigationDestination(icon: Icon(Icons.event_outlined), selectedIcon: Icon(Icons.event, color: AppTheme.primaryColor), label: "Schedule"),
-          NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map, color: AppTheme.primaryColor), label: "Map"),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person, color: AppTheme.primaryColor), label: "Profile"),
+        indicatorColor: AppTheme.doctorPrimary.withOpacity(0.1),
+        destinations: [
+          NavigationDestination(
+              icon: const Icon(Icons.dashboard_outlined),
+              selectedIcon: const Icon(Icons.dashboard, color: AppTheme.doctorPrimary),
+              label: l.dashboard),
+          NavigationDestination(
+              icon: const Icon(Icons.event_outlined),
+              selectedIcon: const Icon(Icons.event, color: AppTheme.doctorPrimary),
+              label: l.schedule),
+          NavigationDestination(
+              icon: const Icon(Icons.map_outlined),
+              selectedIcon: const Icon(Icons.map, color: AppTheme.doctorPrimary),
+              label: l.map),
+          NavigationDestination(
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person, color: AppTheme.doctorPrimary),
+              label: l.profile),
         ],
       ),
     );
@@ -60,21 +73,13 @@ class ProviderHomeTab extends StatefulWidget {
 class _ProviderHomeTabState extends State<ProviderHomeTab> {
   List bookings = [];
   Map stats = {"total": 0, "pending": 0, "accepted": 0, "rejected": 0};
+  Map? providerProfile;
   bool isLoading = true;
-  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     loadData();
-    // Real-time updates every 10 seconds
-    _timer = Timer.periodic(const Duration(seconds: 10), (timer) => loadData());
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
   }
 
   void loadData() async {
@@ -82,11 +87,12 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
     final email = user?['email'];
     final bData = email != null ? await ApiService.getProviderBookings(email) : await ApiService.getAllBookings();
     final sData = await ApiService.getBookingStats(email: email);
-    
+    final pData = email != null ? await ApiService.getProviderProfile(email) : null;
     if (mounted) {
       setState(() {
         bookings = bData;
         stats = sData;
+        providerProfile = pData;
         isLoading = false;
       });
     }
@@ -94,6 +100,7 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final user = Session.currentUser;
 
     return Scaffold(
@@ -106,10 +113,20 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 60, 24, 20),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Dashboard", style: Theme.of(context).textTheme.bodyMedium),
-                    Text("Hello, ${user?['name']?.split(' ')[0] ?? 'Doctor'}", style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Doctor Portal", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.doctorPrimary)),
+                        const LanguageSwitcher(),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    AnimatedGreetingCard(
+                      name: user?['name']?.split(' ')[0] ?? 'Doctor',
+                      color: AppTheme.doctorPrimary,
+                      subtitle: "Check your appointments and manage patient records.",
+                    ),
                   ],
                 ),
               ),
@@ -120,29 +137,93 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Stats Row
+                    _buildStatsRow(l),
+                    const SizedBox(height: 32),
+                    
+                    // --- RECENT APPOINTMENTS (Moved Up) ---
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _statCard("Pending", stats['pending'].toString(), Colors.orange),
-                        const SizedBox(width: 12),
-                        _statCard("Accepted", stats['accepted'].toString(), Colors.green),
-                        const SizedBox(width: 12),
-                        _statCard("Completed", "0", Colors.blue),
+                        const Text("Recent Appointments", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        TextButton(
+                          onPressed: () {
+                             context.findAncestorStateOfType<_ServiceProviderDashboardState>()?.setState(() {
+                              context.findAncestorStateOfType<_ServiceProviderDashboardState>()?._currentIndex = 1;
+                            });
+                          },
+                          child: const Text("View Schedule", style: TextStyle(color: AppTheme.doctorPrimary, fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (bookings.isEmpty)
+                      const Center(child: Text("No appointments found", style: TextStyle(color: Colors.grey)))
+                    else
+                      Column(
+                        children: bookings.map((b) => _buildBookingCard(b)).toList(),
+                      ),
+                    
+                    const SizedBox(height: 32),
+
+                    // --- PROFESSIONAL TOOLS (Moved Down) ---
+                    const Text("Professional Tools", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.6, // Smaller box size
+                      children: [
+                        DashboardTile(
+                          title: "Today's Appointments",
+                          icon: Icons.calendar_today,
+                          color: AppTheme.doctorPrimary,
+                          onTap: () {
+                            // Find the parent ServiceProviderDashboard state to change tab
+                            context.findAncestorStateOfType<_ServiceProviderDashboardState>()?.setState(() {
+                              context.findAncestorStateOfType<_ServiceProviderDashboardState>()?._currentIndex = 1;
+                            });
+                          },
+                        ),
+                        DashboardTile(
+                          title: "Patient Records",
+                          icon: Icons.folder_shared,
+                          color: Colors.teal,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MedicalHistoryScreen())),
+                        ),
+                        DashboardTile(
+                          title: "My Availability",
+                          icon: Icons.access_time,
+                          color: Colors.orange,
+                          onTap: () {
+                             context.findAncestorStateOfType<_ServiceProviderDashboardState>()?.setState(() {
+                              context.findAncestorStateOfType<_ServiceProviderDashboardState>()?._currentIndex = 1;
+                            });
+                          },
+                        ),
+                        DashboardTile(
+                          title: "My Ratings",
+                          icon: Icons.star,
+                          color: Colors.amber,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+                        ),
+                        DashboardTile(
+                          title: "Q&A Forum",
+                          icon: Icons.forum,
+                          color: Colors.purple,
+                          onTap: () {},
+                        ),
+                        DashboardTile(
+                          title: "Earnings",
+                          icon: Icons.payments,
+                          color: Colors.green,
+                          onTap: () {},
+                        ),
                       ],
                     ),
                     const SizedBox(height: 32),
-                    const Text("Active Requests", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : bookings.isEmpty
-                            ? _emptyRequests()
-                            : ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: bookings.length,
-                                itemBuilder: (context, index) => _requestItem(bookings[index]),
-                              ),
                   ],
                 ),
               ),
@@ -153,115 +234,132 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
     );
   }
 
-  Widget _statCard(String title, String value, Color color) {
+  Widget _buildBookingCard(Map b) {
+    bool isPending = b['status'] == "PENDING";
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.doctorPrimary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.person, color: AppTheme.doctorPrimary, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(b['serviceType'] ?? "Consultation", style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(b['farmerEmail'] ?? "Farmer", style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(b['appointmentDate'] ?? "", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  Text(b['status'] ?? "PENDING", 
+                    style: TextStyle(
+                      color: b['status'] == "ACCEPTED" ? Colors.green : (b['status'] == "REJECTED" ? Colors.red : Colors.orange), 
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 10
+                    )
+                  ),
+                ],
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ConsultationDetailScreen(booking: b))),
+              ),
+            ],
+          ),
+          if (isPending) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _updateStatus(b['id'], "REJECTED"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      minimumSize: const Size(0, 40),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Reject", style: TextStyle(fontSize: 13)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _updateStatus(b['id'], "ACCEPTED"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 40),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Accept", style: TextStyle(fontSize: 13)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _updateStatus(int id, String status) async {
+    final user = Session.currentUser;
+    final email = user?['email'];
+    await ApiService.updateBookingStatus(id, status, providerEmail: email);
+    loadData();
+  }
+
+  Widget _buildStatsRow(AppLocalizations l) {
+    return Row(
+      children: [
+        _statItem(stats['pending'].toString(), "Pending", Colors.orange),
+        const SizedBox(width: 12),
+        _statItem(stats['accepted'].toString(), "Active", Colors.green),
+        const SizedBox(width: 12),
+        _statItem(providerProfile?['avgRating']?.toString() ?? "0.0", "Rating", Colors.amber),
+      ],
+    );
+  }
+
+  Widget _statItem(String value, String label, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade100),
+          border: Border.all(color: color.withOpacity(0.1)),
         ),
         child: Column(
           children: [
             Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-            Text(title, style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
           ],
         ),
       ),
     );
-  }
-
-  Widget _requestItem(Map b) {
-    bool isPending = b['status'] == "PENDING";
-    return InkWell(
-      onTap: isPending
-          ? null
-          : () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ConsultationDetailScreen(booking: b)),
-              ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade100),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: AppTheme.primaryColor.withOpacity(0.05),
-                  child: const Icon(Icons.person_outline, color: AppTheme.primaryColor, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(b['farmerEmail'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(b['serviceType'], style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                    ],
-                  ),
-                ),
-                if (b['status'] == "ACCEPTED")
-                  IconButton(
-                    icon: const Icon(Icons.history, color: AppTheme.primaryColor, size: 22),
-                    tooltip: "Medical History",
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => MedicalHistoryScreen(farmerEmail: b['farmerEmail'])),
-                    ),
-                  )
-                else
-                  IconButton(
-                    icon: const Icon(Icons.phone_outlined, color: AppTheme.primaryColor, size: 20),
-                    onPressed: () => launchUrl(Uri.parse("tel:9999999999")),
-                  ),
-              ],
-            ),
-            if (isPending) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => _update(b['id'], "REJECTED"),
-                      child: const Text("Decline", style: TextStyle(color: Colors.red)),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _update(b['id'], "ACCEPTED"),
-                      style: ElevatedButton.styleFrom(minimumSize: const Size(0, 40)),
-                      child: const Text("Accept"),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _emptyRequests() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Text("No requests today", style: TextStyle(color: Colors.grey.shade400)),
-      ),
-    );
-  }
-
-  void _update(int id, String status) async {
-    final user = Session.currentUser;
-    await ApiService.updateBookingStatus(id, status, providerEmail: user?['email']);
-    loadData();
   }
 }

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
+import 'otp_verification_screen.dart';
+import '../services/lookup_service.dart';
 
 class EditProviderProfileScreen extends StatefulWidget {
   const EditProviderProfileScreen({super.key});
@@ -71,12 +74,12 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
           _lngController.text = position.longitude.toString();
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Location updated to your current position!")),
+          SnackBar(content: Text(AppLocalizations.of(context)!.locationUpdated)),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Could not fetch location. Please check GPS settings.")),
+        SnackBar(content: Text(AppLocalizations.of(context)!.locationFailed)),
       );
     }
   }
@@ -87,44 +90,70 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
     setState(() => isSaving = true);
 
     final user = Session.currentUser;
-    final updatedData = {
-      "email": user?['email'],
-      "name": _nameController.text,
-      "specialization": _specializationController.text,
-      "clinicName": _clinicController.text,
-      "phone": _phoneController.text,
-      "consultationFee": double.tryParse(_feeController.text) ?? 0.0,
-      "latitude": double.tryParse(_latController.text) ?? 0.0,
-      "longitude": double.tryParse(_lngController.text) ?? 0.0,
-      "description": _descriptionController.text,
-      "workingHours": _workingHoursController.text,
-      "doctorType": _doctorType,
-      "district": _districtController.text,
-    };
+    final email = user?['email'] ?? "";
 
-    final success = await ApiService.updateProviderProfile(updatedData);
+    // 🛡️ STEP 1: Send OTP for Sensitive Action
+    final otpSent = await ApiService.sendOtp(email, "PROFILE_UPDATE");
+    
+    if (!mounted) return;
+    setState(() => isSaving = false);
 
-    if (mounted) {
-      setState(() => isSaving = false);
-      if (success) {
-        // Update local session name if changed
-        Session.currentUser!['name'] = _nameController.text;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profile updated successfully!")),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to update profile.")),
-        );
-      }
+    if (otpSent) {
+      // 🛡️ STEP 2: Verify OTP
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpVerificationScreen(
+            email: email,
+            type: "PROFILE_UPDATE",
+            onVerified: () async {
+              // 🛡️ STEP 3: Finalize Update
+              final updatedData = {
+                "email": email,
+                "name": _nameController.text,
+                "specialization": _specializationController.text,
+                "clinicName": _clinicController.text,
+                "phone": _phoneController.text,
+                "consultationFee": double.tryParse(_feeController.text) ?? 0.0,
+                "latitude": double.tryParse(_latController.text) ?? 0.0,
+                "longitude": double.tryParse(_lngController.text) ?? 0.0,
+                "description": _descriptionController.text,
+                "workingHours": _workingHoursController.text,
+                "doctorType": _doctorType,
+                "district": _districtController.text,
+              };
+
+              final success = await ApiService.updateProviderProfile(updatedData);
+
+              if (mounted) {
+                if (success) {
+                  Session.currentUser!['name'] = _nameController.text;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated)),
+                  );
+                  Navigator.pop(context); // From OTP
+                  Navigator.pop(context); // From Edit Screen
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdateFailed)),
+                  );
+                }
+              }
+            },
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to send verification code.")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Professional Profile")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.editProfessionalProfile)),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -134,56 +163,57 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader("Basic Information"),
+                    _buildSectionHeader(AppLocalizations.of(context)!.basicInformation),
                     const SizedBox(height: 16),
-                    _buildTextField(_nameController, "Full Name", Icons.person_outline),
-                    _buildTextField(_specializationController, "Specialization", Icons.medical_services_outlined),
-                    _buildTextField(_clinicController, "Clinic/Hospital Name", Icons.local_hospital_outlined),
-                    _buildTextField(_phoneController, "Contact Number", Icons.phone_outlined, keyboardType: TextInputType.phone),
-                    _buildTextField(_districtController, "District / City", Icons.location_city_outlined),
-                    _buildTextField(_descriptionController, "About Me / Bio", Icons.info_outline, maxLines: 3),
-                    _buildTextField(_workingHoursController, "Working Hours (e.g. 9AM - 6PM)", Icons.access_time),
+                    _buildTextField(_nameController, AppLocalizations.of(context)!.fullName, Icons.person_outline),
+                    _buildTextField(_specializationController, AppLocalizations.of(context)!.specialization, Icons.medical_services_outlined),
+                    _buildTextField(_clinicController, AppLocalizations.of(context)!.clinicHospitalName, Icons.local_hospital_outlined),
+                    _buildTextField(_phoneController, AppLocalizations.of(context)!.contactNumber, Icons.phone_outlined, keyboardType: TextInputType.phone),
+                    
+                    _buildTextField(_districtController, "District", Icons.location_city_outlined),
+                    
+                    _buildTextField(_descriptionController, AppLocalizations.of(context)!.aboutMeBio, Icons.info_outline, maxLines: 3),
+                    _buildTextField(_workingHoursController, AppLocalizations.of(context)!.workingHoursLabel, Icons.access_time),
                     
                     DropdownButtonFormField<String>(
                       value: _doctorType,
                       decoration: InputDecoration(
-                        labelText: "Provider Type",
+                        labelText: AppLocalizations.of(context)!.providerType,
                         prefixIcon: const Icon(Icons.category_outlined, color: AppTheme.primaryColor),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: "PRIVATE", child: Text("Private")),
-                        DropdownMenuItem(value: "GOVERNMENT", child: Text("Government")),
-                        DropdownMenuItem(value: "NGO", child: Text("NGO")),
+                      items: [
+                        DropdownMenuItem(value: "PRIVATE", child: Text(AppLocalizations.of(context)!.private)),
+                        DropdownMenuItem(value: "GOVERNMENT", child: Text(AppLocalizations.of(context)!.government)),
+                        DropdownMenuItem(value: "NGO", child: Text(AppLocalizations.of(context)!.ngo)),
                       ],
                       onChanged: (v) => setState(() => _doctorType = v!),
                     ),
                     
                     const SizedBox(height: 24),
-                    _buildSectionHeader("Service Details"),
+                    _buildSectionHeader(AppLocalizations.of(context)!.serviceDetails),
                     const SizedBox(height: 16),
-                    _buildTextField(_feeController, "Consultation Fee (₹)", Icons.payments_outlined, keyboardType: TextInputType.number),
+                    _buildTextField(_feeController, AppLocalizations.of(context)!.consultationFee, Icons.payments_outlined, keyboardType: TextInputType.number),
                     
                     const SizedBox(height: 24),
-                    _buildSectionHeader("Location (Map Coordinates)"),
+                    _buildSectionHeader(AppLocalizations.of(context)!.locationCoordinates),
                     const SizedBox(height: 8),
                     TextButton.icon(
                       onPressed: _getCurrentLocation,
                       icon: const Icon(Icons.my_location, size: 18),
-                      label: const Text("Get My Current Location"),
+                       label: Text(AppLocalizations.of(context)!.getMyCurrentLocation),
                       style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Expanded(child: _buildTextField(_latController, "Latitude", Icons.location_on_outlined, keyboardType: TextInputType.number)),
+                        Expanded(child: _buildTextField(_latController, AppLocalizations.of(context)!.latitude, Icons.location_on_outlined, keyboardType: TextInputType.number)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildTextField(_lngController, "Longitude", Icons.location_on_outlined, keyboardType: TextInputType.number)),
+                        Expanded(child: _buildTextField(_lngController, AppLocalizations.of(context)!.longitude, Icons.location_on_outlined, keyboardType: TextInputType.number)),
                       ],
                     ),
-                    const Text(
-                      "Tip: You can get these from Google Maps by long-pressing any location.",
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(AppLocalizations.of(context)!.locationTip,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     
                     const SizedBox(height: 40),
@@ -195,7 +225,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> {
                       ),
                       child: isSaving 
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Save Changes", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        : Text(AppLocalizations.of(context)!.saveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

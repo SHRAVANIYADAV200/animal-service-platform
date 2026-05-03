@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF1B5E20); // Darker, more professional Green
-  static const Color secondaryColor = Color(0xFFFF8F00); // Softer Amber
+  static const Color primaryColor = Color(0xFF1B5E20);
+  static const Color farmerPrimary = Color(0xFF2E7D32);
+  static const Color doctorPrimary = Color(0xFF1565C0);
+  static const Color secondaryColor = Color(0xFFFF8F00);
   static const Color backgroundColor = Color(0xFFF8FAF8); // Very light greenish-white
   static const Color cardColor = Colors.white;
 

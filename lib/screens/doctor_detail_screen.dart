@@ -1,42 +1,99 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import '../services/api_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/lookup_service.dart';
 
-class DoctorDetailScreen extends StatelessWidget {
+import '../widgets/star_rating_widget.dart';
+
+class DoctorDetailScreen extends StatefulWidget {
   final Map doctor;
   const DoctorDetailScreen({super.key, required this.doctor});
+
+  @override
+  State<DoctorDetailScreen> createState() => _DoctorDetailScreenState();
+}
+
+class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
+  late Map currentDoctor;
+  bool isRefreshing = false;
+  List reviews = [];
+  bool isLoadingReviews = true;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    currentDoctor = widget.doctor;
+    _refreshDoctorData();
+    _loadReviews();
+    _timer = Timer.periodic(const Duration(seconds: 5), (t) => _refreshDoctorData());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshDoctorData() async {
+    if (currentDoctor['email'] == null) return;
+    final freshData = await ApiService.getProviderProfile(currentDoctor['email']);
+    if (freshData != null && mounted) {
+      setState(() {
+        currentDoctor = freshData;
+      });
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    if (currentDoctor['id'] == null) return;
+    final data = await ApiService.getProviderReviews(currentDoctor['id']);
+    if (mounted) {
+      setState(() {
+        reviews = data;
+        isLoadingReviews = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(context),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context),
-                  const SizedBox(height: 32),
-                  _buildAbout(),
-                  const SizedBox(height: 32),
-                  _buildClinicDetails(),
-                  const SizedBox(height: 32),
-                  _buildStats(),
-                  const SizedBox(height: 40),
-                  _buildActionButtons(context),
-                  const SizedBox(height: 40),
-                ],
+      body: RefreshIndicator(
+        onRefresh: _refreshDoctorData,
+        child: CustomScrollView(
+          slivers: [
+            _buildAppBar(context),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context),
+                    const SizedBox(height: 32),
+                    _buildAbout(),
+                    const SizedBox(height: 32),
+                    _buildClinicDetails(),
+                    const SizedBox(height: 32),
+                    _buildStats(),
+                    const SizedBox(height: 32),
+                    _buildReviews(),
+                    const SizedBox(height: 40),
+                    _buildActionButtons(context),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -47,7 +104,7 @@ class DoctorDetailScreen extends StatelessWidget {
       pinned: true,
       backgroundColor: AppTheme.primaryColor,
       flexibleSpace: FlexibleSpaceBar(
-        title: Text(doctor['name'], style: const TextStyle(color: Colors.white, fontSize: 16)),
+        title: Text(currentDoctor['name'], style: const TextStyle(color: Colors.white, fontSize: 16)),
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -75,8 +132,8 @@ class DoctorDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(doctor['name'], style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28)),
-                  Text(doctor['specialization'] ?? "Veterinary Specialist", 
+                  Text(currentDoctor['name'], style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28)),
+                  Text(currentDoctor['specialization'] ?? AppLocalizations.of(context)!.veterinarySpecialist, 
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 16)),
                 ],
               ),
@@ -87,7 +144,7 @@ class DoctorDetailScreen extends StatelessWidget {
                 color: AppTheme.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Text(doctor['doctorType'] ?? "PRIVATE", 
+              child: Text(currentDoctor['doctorType'] ?? "PRIVATE", 
                 style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 12)),
             ),
           ],
@@ -95,15 +152,9 @@ class DoctorDetailScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            RatingBarIndicator(
-              rating: (doctor['avgRating'] ?? 0.0).toDouble(),
-              itemBuilder: (context, index) => const Icon(Icons.star, color: Colors.amber),
-              itemCount: 5,
-              itemSize: 20.0,
-              direction: Axis.horizontal,
-            ),
+            StarRatingWidget(rating: (currentDoctor['avgRating'] ?? 0.0).toDouble(), size: 20),
             const SizedBox(width: 8),
-            Text("${doctor['avgRating'] ?? 0.0} (24 Reviews)", 
+            Text("(${AppLocalizations.of(context)!.nReviews(currentDoctor['totalReviews'] ?? 0)})", 
               style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
           ],
         ),
@@ -111,14 +162,73 @@ class DoctorDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildReviews() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(AppLocalizations.of(context)!.reviews, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            if (reviews.isNotEmpty)
+              Text("${reviews.length} ${AppLocalizations.of(context)!.total}", style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (isLoadingReviews)
+          const Center(child: CircularProgressIndicator())
+        else if (reviews.isEmpty)
+          Center(
+            child: Text("No reviews yet", style: TextStyle(color: Colors.grey.shade400)),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: reviews.length > 3 ? 3 : reviews.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) => _reviewCard(reviews[index]),
+          ),
+      ],
+    );
+  }
+
+  Widget _reviewCard(Map r) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(r['reviewerName'] ?? "Anonymous", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              StarRatingWidget(rating: (r['rating'] ?? 0).toDouble(), size: 12, showText: false),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            r['comment'] ?? "",
+            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAbout() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("About Doctor", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(AppLocalizations.of(context)!.aboutDoctor, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         Text(
-          doctor['description'] ?? "No bio provided.",
+          currentDoctor['description'] ?? AppLocalizations.of(context)!.noBioProvided,
           style: TextStyle(color: Colors.grey.shade700, height: 1.6),
         ),
       ],
@@ -135,11 +245,11 @@ class DoctorDetailScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _infoTile(Icons.storefront_outlined, "Clinic Name", doctor['clinicName'] ?? "Clinic"),
+          _infoTile(Icons.storefront_outlined, AppLocalizations.of(context)!.clinicName, currentDoctor['clinicName'] ?? "Clinic"),
           const Divider(height: 32),
-          _infoTile(Icons.location_on_outlined, "Location", doctor['district'] ?? "Not set"),
+          _infoTile(Icons.location_on_outlined, AppLocalizations.of(context)!.location, currentDoctor['district'] ?? AppLocalizations.of(context)!.notSet),
           const Divider(height: 32),
-          _infoTile(Icons.access_time, "Working Hours", doctor['workingHours'] ?? "Not set"),
+          _infoTile(Icons.access_time, AppLocalizations.of(context)!.workingHours, currentDoctor['workingHours'] ?? AppLocalizations.of(context)!.notSet),
         ],
       ),
     );
@@ -165,9 +275,9 @@ class DoctorDetailScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _statItem("1,200+", "Patients"),
-        _statItem("10 Years", "Experience"),
-        _statItem("4.8/5", "Rating"),
+        _statItem("1,200+", AppLocalizations.of(context)!.patients),
+        _statItem("10 Years", AppLocalizations.of(context)!.experience),
+        _statItem("${currentDoctor['avgRating'] ?? 0.0}/5", AppLocalizations.of(context)!.rating),
       ],
     );
   }
@@ -191,12 +301,12 @@ class DoctorDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text("Book Appointment", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            child: Text(AppLocalizations.of(context)!.bookAppointment, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(width: 16),
         GestureDetector(
-          onTap: () => launchUrl(Uri.parse("tel:${doctor['phone'] ?? '9999999999'}")),
+          onTap: () => launchUrl(Uri.parse("tel:${currentDoctor['phone'] ?? '9999999999'}")),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -214,16 +324,29 @@ class DoctorDetailScreen extends StatelessWidget {
   void _bookAppointment(BuildContext context) async {
     final user = Session.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please login to book")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.pleaseLoginToBook)));
       return;
     }
+
+    String? selectedService = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text("Select Service"),
+        children: lookup.services.map((s) => SimpleDialogOption(
+          onPressed: () => Navigator.pop(ctx, s),
+          child: Text(s),
+        )).toList(),
+      ),
+    );
+
+    if (selectedService == null) return;
 
     DateTime? selectedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 30)),
-      helpText: "SELECT APPOINTMENT DATE",
+      helpText: AppLocalizations.of(context)!.selectAppointmentDate,
     );
 
     if (selectedDate == null) return;
@@ -231,7 +354,7 @@ class DoctorDetailScreen extends StatelessWidget {
     TimeOfDay? selectedTime = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 9, minute: 0),
-      helpText: "SELECT APPOINTMENT TIME",
+      helpText: AppLocalizations.of(context)!.selectAppointmentTime,
     );
 
     if (selectedTime == null) return;
@@ -249,8 +372,8 @@ class DoctorDetailScreen extends StatelessWidget {
 
     await ApiService.createBooking(
       user['email'], 
-      "Consultation",
-      providerEmail: doctor['email'],
+      selectedService,
+      providerEmail: currentDoctor['email'],
       date: dateStr,
       time: timeStr,
     );
@@ -264,9 +387,9 @@ class DoctorDetailScreen extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Appointment Requested!", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(AppLocalizations.of(context)!.appointmentRequested, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 8),
-              Text("Your request has been sent to ${doctor['name']}. You will be notified once they accept."),
+              Text(AppLocalizations.of(context)!.requestSentTo(currentDoctor['name'])),
             ],
           ),
           actions: [
@@ -275,7 +398,7 @@ class DoctorDetailScreen extends StatelessWidget {
                 Navigator.pop(ctx);
                 Navigator.pop(context);
               },
-              child: const Text("OK"),
+              child: Text(AppLocalizations.of(context)!.ok),
             ),
           ],
         ),

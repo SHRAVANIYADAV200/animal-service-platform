@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import '../services/api_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
@@ -85,7 +86,7 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("My Schedule", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context)!.mySchedule, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               Switch(
                 value: isAvailable,
                 onChanged: (v) async {
@@ -105,7 +106,7 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
             children: [
               Icon(Icons.circle, size: 10, color: isAvailable ? Colors.green : Colors.grey),
               const SizedBox(width: 8),
-              Text(isAvailable ? "Online - Visible on Map" : "Offline - Hidden from Map", 
+              Text(isAvailable ? AppLocalizations.of(context)!.onlineVisible : AppLocalizations.of(context)!.offlineHidden,
                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
             ],
           ),
@@ -188,7 +189,7 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
         children: [
           Icon(Icons.event_available_outlined, size: 60, color: Colors.grey.shade200),
           const SizedBox(height: 16),
-          Text("No appointments for this day", style: TextStyle(color: Colors.grey.shade400)),
+          Text(AppLocalizations.of(context)!.noAppointmentsForDay, style: TextStyle(color: Colors.grey.shade400)),
         ],
       ),
     );

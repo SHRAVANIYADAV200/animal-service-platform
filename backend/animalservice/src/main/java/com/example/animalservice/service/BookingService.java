@@ -15,10 +15,24 @@ public class BookingService {
     @Autowired
     private BookingRepository repository;
 
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private com.example.animalservice.repository.ServiceProviderRepository providerRepository;
+
     // Create booking
     public Booking createBooking(Booking booking) {
         booking.setStatus("PENDING"); // default status
-        return repository.save(booking);
+        Booking saved = repository.save(booking);
+        
+        // 🔔 Notify all Doctors about new booking
+        providerRepository.findByRole("Service Provider").forEach(doc -> {
+            notificationService.sendToUser(doc.getEmail(), "New Booking Request", 
+                "A new " + saved.getServiceType() + " request is available.");
+        });
+        
+        return saved;
     }
 
     // Get all bookings (for service provider overview)
@@ -52,6 +66,10 @@ public class BookingService {
         if (status.equals("ACCEPTED")) {
             b.setAppointmentTime("10:30 AM");
             b.setProviderEmail(providerEmail);
+            
+            // 🔔 Notify Farmer
+            notificationService.sendToUser(b.getFarmerEmail(), "Booking Confirmed", 
+                "Your " + b.getServiceType() + " appointment has been accepted!");
         }
         
         return repository.save(b);

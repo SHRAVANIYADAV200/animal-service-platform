@@ -14,6 +14,8 @@ public class Review {
     private int userId;
     private int providerId;
     private int bookingId;
+    private String farmerEmail;
+    private String providerEmail;
     private int rating; // 1-5
     
     @Column(columnDefinition = "TEXT")
@@ -39,6 +41,12 @@ public class Review {
 
     public int getBookingId() { return bookingId; }
     public void setBookingId(int bookingId) { this.bookingId = bookingId; }
+
+    public String getFarmerEmail() { return farmerEmail; }
+    public void setFarmerEmail(String farmerEmail) { this.farmerEmail = farmerEmail; }
+
+    public String getProviderEmail() { return providerEmail; }
+    public void setProviderEmail(String providerEmail) { this.providerEmail = providerEmail; }
 
     public int getRating() { return rating; }
     public void setRating(int rating) { this.rating = rating; }

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/api_service.dart';
@@ -22,11 +24,20 @@ class _MapScreenState extends State<MapScreen> {
   bool isLoading = true;
   int selectedProviderIndex = -1;
   final PageController _pageController = PageController(viewportFraction: 0.85);
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _initMap();
+    _timer = Timer.periodic(const Duration(seconds: 5), (t) => _loadProviders(silent: true));
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _initMap() async {
@@ -34,13 +45,16 @@ class _MapScreenState extends State<MapScreen> {
     await _loadProviders();
   }
 
-  Future<void> _loadProviders() async {
+  Future<void> _loadProviders({bool silent = false}) async {
+    if (!silent) setState(() => isLoading = true);
     final data = await ApiService.getAllProviders();
-    setState(() {
-      providers = data;
-      _updateMarkers();
-      isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        providers = data;
+        _updateMarkers();
+        isLoading = false;
+      });
+    }
   }
 
   void _updateMarkers() {
@@ -169,11 +183,11 @@ class _MapScreenState extends State<MapScreen> {
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
               ),
-              child: const TextField(
+              child: TextField(
                 decoration: InputDecoration(
-                  hintText: "Search nearby vets...",
+                  hintText: AppLocalizations.of(context)!.searchNearbyVets,
                   border: InputBorder.none,
-                  icon: Icon(Icons.search, color: AppTheme.primaryColor),
+                  icon: const Icon(Icons.search, color: AppTheme.primaryColor),
                 ),
               ),
             ),
@@ -239,15 +253,15 @@ class _MapScreenState extends State<MapScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(p['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  Text(p['specialization'] ?? "Vet Specialist", style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                  Text(p['specialization'] ?? AppLocalizations.of(context)!.veterinarySpecialist, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       const Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
-                      Text(p['avgRating']?.toString() ?? "0.0", style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text("${p['avgRating']?.toString() ?? "0.0"} (${AppLocalizations.of(context)!.nReviews(p['totalReviews'] ?? 0)})", style: const TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      Text("(${p['distance'] ?? '0.8 km'})", style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                      Text("Distance: ${p['distance'] ?? '0.8 km'}", style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -259,7 +273,7 @@ class _MapScreenState extends State<MapScreen> {
                       minimumSize: const Size(double.infinity, 36),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text("View & Book", style: TextStyle(fontSize: 12)),
+                    child: Text(AppLocalizations.of(context)!.viewAndBook, style: const TextStyle(fontSize: 12)),
                   ),
                 ],
               ),

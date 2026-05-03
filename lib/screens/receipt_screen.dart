@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -26,7 +27,7 @@ class ReceiptScreen extends StatelessWidget {
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
+        build: (pw.Context pdfContext) {
           return pw.Padding(
             padding: const pw.EdgeInsets.all(32),
             child: pw.Column(
@@ -37,8 +38,8 @@ class ReceiptScreen extends StatelessWidget {
                   child: pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text("Animal Service Platform", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                      pw.Text("RECEIPT", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+                      pw.Text(AppLocalizations.of(context)!.appTitle, style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                      pw.Text(AppLocalizations.of(context)!.paymentReceipt, style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
                     ],
                   ),
                 ),
@@ -49,25 +50,25 @@ class ReceiptScreen extends StatelessWidget {
                     pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text("Service: ${booking['serviceType'] ?? "Consultation"}"),
-                        pw.Text("Patient: ${booking['farmerEmail'] ?? "N/A"}"),
+                        pw.Text("${AppLocalizations.of(context)!.serviceType}: ${booking['serviceType'] ?? AppLocalizations.of(context)!.consultation}"),
+                        pw.Text("${AppLocalizations.of(context)!.patientId}: ${booking['farmerEmail'] ?? AppLocalizations.of(context)!.nA}"),
                       ],
                     ),
                     pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.end,
                       children: [
-                        pw.Text("Date: $date"),
+                        pw.Text("${AppLocalizations.of(context)!.dateGiven} $date"),
                         pw.Text("Invoice #: ${booking['id'] ?? '0000'}"),
                       ],
                     ),
                   ],
                 ),
                 pw.SizedBox(height: 40),
-                pw.Text("Bill Summary", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                pw.Text(AppLocalizations.of(context)!.activeRequests, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.Divider(),
                 if (medications.isNotEmpty) ...[
                   pw.SizedBox(height: 10),
-                  pw.Text("Medications:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text("${AppLocalizations.of(context)!.medications}:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                   ...medications.map((m) => pw.Bullet(text: m['content'] ?? "")),
                 ],
                 pw.SizedBox(height: 20),
@@ -80,7 +81,7 @@ class ReceiptScreen extends StatelessWidget {
                   ],
                 ),
                 pw.SizedBox(height: 40),
-                pw.Center(child: pw.Text("Thank you for using our service!", style: const pw.TextStyle(fontStyle: pw.FontStyle.italic))),
+                pw.Center(child: pw.Text(AppLocalizations.of(context)!.thankYouService, style: const pw.TextStyle(fontStyle: pw.FontStyle.italic))),
               ],
             ),
           );
@@ -109,12 +110,12 @@ class ReceiptScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text("Consultation Bill"),
+        title: Text(AppLocalizations.of(context)!.consultationBill),
         actions: [
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: () => _generatePdf(context),
-            tooltip: "Download PDF",
+            tooltip: AppLocalizations.of(context)!.downloadPdf,
           )
         ],
       ),
@@ -143,12 +144,12 @@ class ReceiptScreen extends StatelessWidget {
                   children: [
                     const Icon(Icons.receipt_long, color: Colors.white, size: 48),
                     const SizedBox(height: 16),
-                    const Text(
-                      "PAYMENT RECEIPT",
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2),
+                    Text(
+                      AppLocalizations.of(context)!.paymentReceipt,
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2),
                     ),
                     const SizedBox(height: 8),
-                    Text("Transaction Date: $date", style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text("${AppLocalizations.of(context)!.transactionDate}: $date", style: const TextStyle(color: Colors.white70, fontSize: 12)),
                   ],
                 ),
               ),
@@ -159,29 +160,29 @@ class ReceiptScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(32),
                   shrinkWrap: true,
                   children: [
-                    _infoRow("Service Type", booking['serviceType'] ?? "General"),
-                    _infoRow("Patient ID", booking['farmerEmail'] ?? "N/A"),
+                    _infoRow(AppLocalizations.of(context)!.serviceType, booking['serviceType'] ?? AppLocalizations.of(context)!.consultation),
+                    _infoRow(AppLocalizations.of(context)!.patientId, booking['farmerEmail'] ?? AppLocalizations.of(context)!.nA),
                     const Divider(height: 40),
                     
                     if (medications.isNotEmpty) ...[
-                      const Text("MEDICATIONS", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
+                      Text(AppLocalizations.of(context)!.medications.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
                       const SizedBox(height: 12),
-                      ...medications.map((m) => _itemRow(m['content'] ?? "Medication", "Prescribed")),
+                      ...medications.map((m) => _itemRow(m['content'] ?? AppLocalizations.of(context)!.medical, AppLocalizations.of(context)!.accepted)),
                       const SizedBox(height: 24),
                     ],
 
-                    const Text("CHARGES", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
+                    Text(AppLocalizations.of(context)!.chargesFees.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
                     const SizedBox(height: 12),
                     ...charges.map((c) {
                       final raw = c['content']?.toString() ?? '0';
-                      return _itemRow("Consultation Fee", raw);
+                      return _itemRow(AppLocalizations.of(context)!.consultation, raw);
                     }),
                     
                     const Divider(height: 40, thickness: 1.5),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text("TOTAL AMOUNT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text(AppLocalizations.of(context)!.totalAmount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         Text("₹${totalCharge.toStringAsFixed(2)}", 
                           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
                       ],
@@ -195,8 +196,8 @@ class ReceiptScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(32),
                 child: Column(
                   children: [
-                    const Text("Thank you for using Animal Service Platform!", 
-                      style: TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic)),
+                    Text(AppLocalizations.of(context)!.thankYouService, 
+                      style: const TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic)),
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
@@ -208,7 +209,7 @@ class ReceiptScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text("Close"),
+                        child: Text(AppLocalizations.of(context)!.close),
                       ),
                     ),
                   ],

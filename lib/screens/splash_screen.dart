@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import 'login_screen.dart';
 import '../theme/app_theme.dart';
 
@@ -9,7 +10,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
@@ -20,7 +22,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+    _fadeAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
     _controller.forward();
 
     Future.delayed(const Duration(seconds: 3), () {
@@ -28,8 +31,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LoginScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },
             transitionDuration: const Duration(milliseconds: 800),
@@ -47,15 +52,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       body: Stack(
         children: [
-          // Background with gradient overlay
           Positioned.fill(
-            child: Image.asset(
-              "assets/images/splash.png",
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset("assets/images/splash.png", fit: BoxFit.cover),
           ),
           Positioned.fill(
             child: Container(
@@ -71,7 +73,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-          // Content
           Center(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -91,47 +92,46 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.pets,
-                      size: 80,
-                      color: AppTheme.primaryColor,
-                    ),
+                    child: const Icon(Icons.pets,
+                        size: 80, color: AppTheme.primaryColor),
                   ),
                   const SizedBox(height: 40),
                   Text(
-                    "Integrated",
+                    l.splashIntegrated,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Colors.white,
                           letterSpacing: 4,
                         ),
                   ),
                   Text(
-                    "Animal Service",
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          color: Colors.white,
-                          fontSize: 40,
-                        ),
+                    l.splashAnimalService,
+                    style: Theme.of(context)
+                        .textTheme
+                        .displayLarge
+                        ?.copyWith(color: Colors.white, fontSize: 40),
                   ),
                   Text(
-                    "Platform",
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          color: Colors.white,
-                          fontSize: 40,
-                        ),
+                    l.splashPlatform,
+                    style: Theme.of(context)
+                        .textTheme
+                        .displayLarge
+                        ?.copyWith(color: Colors.white, fontSize: 40),
                   ),
                   const SizedBox(height: 20),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppTheme.secondaryColor,
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(
-                      "Smart Welfare",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      l.splashSmartWelfare,
+                      style:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                   ),
                 ],

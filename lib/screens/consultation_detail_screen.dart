@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import '../services/api_service.dart';
 import '../services/session.dart';
 import '../theme/app_theme.dart';
 import 'medical_history_screen.dart';
 import 'receipt_screen.dart';
+import 'rate_doctor_screen.dart';
 import 'package:intl/intl.dart';
 
 class ConsultationDetailScreen extends StatefulWidget {
@@ -125,14 +127,14 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Prescribe Medication'),
+        title: Text(AppLocalizations.of(context)!.prescribeMedication),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: nameCtrl, decoration: const InputDecoration(hintText: 'Medicine name')),
+          TextField(controller: nameCtrl, decoration: InputDecoration(hintText: AppLocalizations.of(context)!.medicineName)),
           const SizedBox(height: 12),
-          TextField(controller: doseCtrl, decoration: const InputDecoration(hintText: 'Dosage & instructions')),
+          TextField(controller: doseCtrl, decoration: InputDecoration(hintText: AppLocalizations.of(context)!.dosageInstructions)),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel)),
           ElevatedButton(
             onPressed: () async {
               if (nameCtrl.text.isEmpty) return;
@@ -144,7 +146,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               await ApiService.addConsultationNote(
                   _bookingId, _user['role'] ?? '', _user['name'] ?? '', entry, 'MEDICATION');
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -157,18 +159,18 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Add Charge'),
+        title: Text(AppLocalizations.of(context)!.addCharge),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: descCtrl, decoration: const InputDecoration(hintText: 'e.g. Consultation fee')),
+          TextField(controller: descCtrl, decoration: InputDecoration(hintText: AppLocalizations.of(context)!.chargeDescriptionHint)),
           const SizedBox(height: 12),
           TextField(
             controller: amtCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(hintText: 'Amount', prefixText: '₹ '),
+            decoration: InputDecoration(hintText: AppLocalizations.of(context)!.amount, prefixText: '₹ '),
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel)),
           ElevatedButton(
             onPressed: () async {
               final amt = double.tryParse(amtCtrl.text) ?? 0;
@@ -184,7 +186,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               await ApiService.addConsultationNote(
                   _bookingId, _user['role'] ?? '', _user['name'] ?? '', entry, 'CHARGE');
             },
-            child: const Text('Add'),
+            child: Text(AppLocalizations.of(context)!.addRecord),
           ),
         ],
       ),
@@ -192,68 +194,13 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
   }
 
   Future<void> _showRatingDialog() async {
-    int selectedRating = 5;
-    final commentCtrl = TextEditingController();
-    
-    await showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text("Rate Consultation"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("How was your experience with the doctor?"),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    icon: Icon(
-                      index < selectedRating ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
-                      size: 32,
-                    ),
-                    onPressed: () => setDialogState(() => selectedRating = index + 1),
-                  );
-                }),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: commentCtrl,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: "Write a comment (optional)",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-            ElevatedButton(
-              onPressed: () async {
-                final success = await ApiService.submitReview({
-                  "bookingId": _bookingId,
-                  "providerId": widget.booking['providerId'] ?? 0,
-                  "userId": _user['id'] ?? 0,
-                  "rating": selectedRating,
-                  "comment": commentCtrl.text,
-                  "reviewerName": _user['name'] ?? "Anonymous",
-                });
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(success ? "Thank you for your rating!" : "Failed to submit rating.")),
-                  );
-                }
-              },
-              child: const Text("Submit"),
-            ),
-          ],
-        ),
-      ),
+    final rated = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => RateDoctorScreen(booking: widget.booking)),
     );
+    if (rated == true) {
+      // Maybe disable the button or show a thank you
+    }
   }
 
   @override
@@ -266,11 +213,11 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.booking['serviceType']?.toString() ?? 'Consultation'),
+              Text(widget.booking['serviceType']?.toString() ?? AppLocalizations.of(context)!.consultation),
               Text(
                 _isDoctor
-                    ? 'Patient: ${widget.booking['farmerEmail'] ?? ''}'
-                    : 'Status: ${widget.booking['status'] ?? ''}',
+                    ? '${AppLocalizations.of(context)!.patient}: ${widget.booking['farmerEmail'] ?? ''}'
+                    : '${AppLocalizations.of(context)!.role}: ${widget.booking['status'] ?? ''}',
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.normal, color: Colors.grey),
               ),
             ],
@@ -287,7 +234,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               ),
             IconButton(
               icon: const Icon(Icons.receipt_long_outlined, color: AppTheme.primaryColor),
-              tooltip: "View Bill",
+              tooltip: AppLocalizations.of(context)!.viewBillTooltip,
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -301,13 +248,13 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               ),
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
             tabs: [
-              Tab(icon: Icon(Icons.chat_bubble_outline, size: 18), text: 'Chat'),
-              Tab(icon: Icon(Icons.medication_outlined, size: 18), text: 'Medical'),
-              Tab(icon: Icon(Icons.shield_outlined, size: 18), text: 'Vaccination'),
-              Tab(icon: Icon(Icons.healing_outlined, size: 18), text: 'First Aid'),
+              Tab(icon: const Icon(Icons.chat_bubble_outline, size: 18), text: AppLocalizations.of(context)!.chat),
+              Tab(icon: const Icon(Icons.medication_outlined, size: 18), text: AppLocalizations.of(context)!.medical),
+              Tab(icon: const Icon(Icons.shield_outlined, size: 18), text: AppLocalizations.of(context)!.vaccination),
+              Tab(icon: const Icon(Icons.healing_outlined, size: 18), text: AppLocalizations.of(context)!.firstAid),
             ],
             indicatorColor: AppTheme.primaryColor,
             labelColor: AppTheme.primaryColor,
@@ -353,7 +300,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
           child: _loadingVaccines
               ? const Center(child: CircularProgressIndicator())
               : _vaccinations.isEmpty
-                  ? Center(child: Text("No vaccination history", style: TextStyle(color: Colors.grey.shade400)))
+                  ? Center(child: Text(AppLocalizations.of(context)!.noVaccinationHistory, style: TextStyle(color: Colors.grey.shade400)))
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _vaccinations.length,
@@ -369,7 +316,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               child: ElevatedButton.icon(
                 onPressed: _showAddVaccineDialog,
                 icon: const Icon(Icons.add),
-                label: const Text("Record Vaccination / Reminder"),
+                label: Text(AppLocalizations.of(context)!.recordVaccination),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                   backgroundColor: AppTheme.primaryColor,
@@ -402,7 +349,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               children: [
                 Text("${v['animalName']} - ${v['vaccineName']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 Text(
-                  isUpcoming ? "Reminder for: ${v['nextDueDate']}" : "Given on: ${v['dateGiven']}",
+                  isUpcoming ? "${AppLocalizations.of(context)!.setReminder}: ${v['nextDueDate']}" : "${AppLocalizations.of(context)!.givenOn}: ${v['dateGiven']}",
                   style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                 ),
               ],
@@ -426,28 +373,28 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text("New Vaccination / Reminder"),
+          title: Text(AppLocalizations.of(context)!.newVaccination),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
                   value: selectedStatus,
-                  items: const [
-                    DropdownMenuItem(value: "COMPLETED", child: Text("Administered Today")),
-                    DropdownMenuItem(value: "UPCOMING", child: Text("Set Future Reminder")),
+                  items: [
+                    DropdownMenuItem(value: "COMPLETED", child: Text(AppLocalizations.of(context)!.administeredToday)),
+                    DropdownMenuItem(value: "UPCOMING", child: Text(AppLocalizations.of(context)!.setFutureReminder)),
                   ],
                   onChanged: (v) => setDialogState(() => selectedStatus = v!),
-                  decoration: const InputDecoration(labelText: "Type"),
+                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.type),
                 ),
                 const SizedBox(height: 12),
-                TextField(controller: animalCtrl, decoration: const InputDecoration(labelText: "Animal Name")),
+                TextField(controller: animalCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.animalName)),
                 const SizedBox(height: 12),
-                TextField(controller: vaccineCtrl, decoration: const InputDecoration(labelText: "Vaccine Name")),
+                TextField(controller: vaccineCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.vaccineName)),
                 const SizedBox(height: 12),
                 if (selectedStatus == "COMPLETED")
                   ListTile(
-                    title: Text("Date Given: ${dateCtrl.text.isEmpty ? 'Today' : dateCtrl.text}"),
+                    title: Text("${AppLocalizations.of(context)!.dateGiven} ${dateCtrl.text.isEmpty ? AppLocalizations.of(context)!.today : dateCtrl.text}"),
                     trailing: const Icon(Icons.calendar_today),
                     onTap: () async {
                       final picked = await showDatePicker(
@@ -463,7 +410,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
                   ),
                 const SizedBox(height: 12),
                 ListTile(
-                  title: Text(selectedStatus == "UPCOMING" ? "Reminder Date: ${nextDueCtrl.text}" : "Next Due Date: ${nextDueCtrl.text.isEmpty ? 'Not set' : nextDueCtrl.text}"),
+                  title: Text(selectedStatus == "UPCOMING" ? "${AppLocalizations.of(context)!.reminderDate} ${nextDueCtrl.text}" : "${AppLocalizations.of(context)!.nextDueDate} ${nextDueCtrl.text.isEmpty ? AppLocalizations.of(context)!.notSet : nextDueCtrl.text}"),
                   trailing: const Icon(Icons.alarm),
                   onTap: () async {
                     final picked = await showDatePicker(
@@ -481,7 +428,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel)),
             ElevatedButton(
               onPressed: () async {
                 if (animalCtrl.text.isNotEmpty && vaccineCtrl.text.isNotEmpty) {
@@ -498,7 +445,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
                   _loadVaccinations();
                 }
               },
-              child: const Text("Save"),
+              child: Text(AppLocalizations.of(context)!.save),
             ),
           ],
         ),
@@ -569,8 +516,8 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(Icons.chat_bubble_outline, size: 56, color: Colors.grey.shade200),
         const SizedBox(height: 12),
-        Text('No messages yet', style: TextStyle(color: Colors.grey.shade400)),
-        Text('Start the consultation', style: TextStyle(color: Colors.grey.shade300, fontSize: 12)),
+        Text(AppLocalizations.of(context)!.noMessagesYet, style: TextStyle(color: Colors.grey.shade400)),
+        Text(AppLocalizations.of(context)!.startConsultation, style: TextStyle(color: Colors.grey.shade300, fontSize: 12)),
       ]),
     );
   }
@@ -592,12 +539,12 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               ),
               child: TextField(
                 controller: _msgController,
-                decoration: const InputDecoration(
-                  hintText: 'Type your message...',
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.typeMessage,
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 onSubmitted: (_) => _sendMessage(),
                 textInputAction: TextInputAction.send,
@@ -632,7 +579,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Payment Due', style: TextStyle(color: Colors.white70, fontSize: 11)),
+            Text(AppLocalizations.of(context)!.paymentDue, style: const TextStyle(color: Colors.white70, fontSize: 11)),
             Text('₹${totalCharge.toStringAsFixed(0)}',
                 style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           ]),
@@ -645,7 +592,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          child: const Text('Pay Now', style: TextStyle(fontWeight: FontWeight.bold)),
+          child: Text(AppLocalizations.of(context)!.payNow, style: const TextStyle(fontWeight: FontWeight.bold)),
         ),
       ]),
     );
@@ -659,15 +606,15 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Complete Payment', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.completePayment, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('Total: ₹${totalCharge.toStringAsFixed(0)}', style: TextStyle(color: Colors.grey.shade500)),
+            Text('${AppLocalizations.of(context)!.total}: ₹${totalCharge.toStringAsFixed(0)}', style: TextStyle(color: Colors.grey.shade500)),
             const SizedBox(height: 20),
-            _payOpt(Icons.account_balance, 'UPI / Net Banking', 'Razorpay — Coming Soon'),
+            _payOpt(Icons.account_balance, AppLocalizations.of(context)!.paymentOptionUPI, 'Razorpay — ${AppLocalizations.of(context)!.comingSoon}'),
             const SizedBox(height: 10),
-            _payOpt(Icons.credit_card, 'Credit / Debit Card', 'Razorpay — Coming Soon'),
+            _payOpt(Icons.credit_card, AppLocalizations.of(context)!.paymentOptionCard, 'Razorpay — ${AppLocalizations.of(context)!.comingSoon}'),
             const SizedBox(height: 10),
-            _payOpt(Icons.currency_rupee, 'Pay at Clinic (Cash)', 'Confirm cash payment'),
+            _payOpt(Icons.currency_rupee, AppLocalizations.of(context)!.paymentOptionCash, AppLocalizations.of(context)!.confirmCashPaymentSmall),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -676,14 +623,14 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('Cash payment confirmed!'),
+                      content: Text(AppLocalizations.of(context)!.cashPaymentConfirmed),
                       backgroundColor: Colors.green,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   );
                 },
-                child: const Text('Confirm Cash Payment'),
+                child: Text(AppLocalizations.of(context)!.confirmCashPayment),
               ),
             ),
           ]),
@@ -715,13 +662,13 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
       Expanded(
         child: ListView(padding: const EdgeInsets.all(16), children: [
           if (medications.isNotEmpty) ...[
-            _sectionHead('Medications', Icons.medication, Colors.blue),
+            _sectionHead(AppLocalizations.of(context)!.medications, Icons.medication, Colors.blue),
             const SizedBox(height: 8),
             ...medications.map((m) => _noteCard(m['content']?.toString() ?? '', Icons.medication, Colors.blue)),
             const SizedBox(height: 20),
           ],
           if (charges.isNotEmpty) ...[
-            _sectionHead('Charges & Fees', Icons.payments, Colors.orange),
+            _sectionHead(AppLocalizations.of(context)!.chargesFees, Icons.payments, Colors.orange),
             const SizedBox(height: 8),
             ...charges.map((c) => _noteCard(c['content']?.toString() ?? '', Icons.receipt_long, Colors.orange)),
             const SizedBox(height: 8),
@@ -732,7 +679,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.orange.withOpacity(0.25))),
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(AppLocalizations.of(context)!.total, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 Text('₹${totalCharge.toStringAsFixed(0)}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange)),
               ]),
@@ -744,7 +691,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               child: Center(child: Column(children: [
                 Icon(Icons.medical_services_outlined, size: 52, color: Colors.grey.shade200),
                 const SizedBox(height: 12),
-                Text('No records yet', style: TextStyle(color: Colors.grey.shade400)),
+                Text(AppLocalizations.of(context)!.noRecordsYet, style: TextStyle(color: Colors.grey.shade400)),
               ])),
             ),
           const SizedBox(height: 32),
@@ -753,7 +700,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
               child: OutlinedButton.icon(
                 onPressed: _showRatingDialog,
                 icon: const Icon(Icons.star_outline),
-                label: const Text("Rate your Doctor"),
+                label: Text(AppLocalizations.of(context)!.rateYourDoctor),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(200, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -773,7 +720,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _addMedication,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Medication'),
+                  label: Text(AppLocalizations.of(context)!.prescribeMedication),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
                 ),
               ),
@@ -782,7 +729,7 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _addCharge,
                   icon: const Icon(Icons.payments_outlined, size: 18),
-                  label: const Text('Add Charge'),
+                  label: Text(AppLocalizations.of(context)!.addCharge),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
                 ),
               ),

@@ -19,6 +19,18 @@ public class ReviewService {
     private ServiceProviderRepository providerRepository;
 
     public Review createReview(Review review) {
+        // Resolve providerId from email if missing
+        if (review.getProviderId() == 0 && review.getProviderEmail() != null) {
+            ServiceProvider p = providerRepository.findByEmail(review.getProviderEmail());
+            if (p != null) review.setProviderId(p.getId());
+        }
+        
+        // Resolve userId (farmer) from email if missing
+        if (review.getUserId() == 0 && review.getFarmerEmail() != null) {
+            ServiceProvider u = providerRepository.findByEmail(review.getFarmerEmail());
+            if (u != null) review.setUserId(u.getId());
+        }
+
         Review saved = reviewRepository.save(review);
 
         // Recalculate average rating for the provider
@@ -31,6 +43,7 @@ public class ReviewService {
         ServiceProvider provider = providerRepository.findById(review.getProviderId()).orElse(null);
         if (provider != null) {
             provider.setAvgRating(Math.round(avg * 10.0) / 10.0);
+            provider.setTotalReviews(allReviews.size());
             providerRepository.save(provider);
         }
 

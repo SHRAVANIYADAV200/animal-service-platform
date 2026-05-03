@@ -31,7 +31,10 @@ public class ServiceProviderController {
     }
 
     @GetMapping("/providers")
-    public List<ServiceProvider> getAllProviders() {
+    public List<ServiceProvider> getAllProviders(@RequestParam(required = false) String type) {
+        if (type != null && !type.equalsIgnoreCase("All")) {
+            return service.getProvidersByType(type.toUpperCase());
+        }
         return service.getAllProviders();
     }
 
@@ -104,32 +107,30 @@ public class ServiceProviderController {
         return null;
     }
 
-    @GetMapping("/seed-markers")
-    public String seedMarkers() {
-        // Sample coordinates around a central point (Pune/Mumbai area for demo)
-        double[][] coords = {
-            {18.5204, 73.8567}, // Pune
-            {18.5590, 73.8270}, // Aundh
-            {18.5089, 73.9259}, // Hadapsar
-            {18.5913, 73.7389}, // Hinjewadi
-            {19.0760, 72.8777}  // Mumbai
-        };
-        String[] names = {"Dr. Sharma Vet Clinic", "Paws & Claws", "Happy Pets Hospital", "VetCare Center", "Animal Hope NGO"};
-        String[] types = {"PRIVATE", "PRIVATE", "GOVERNMENT", "NGO", "PRIVATE"};
+    @GetMapping("/seed-diverse")
+    public String seedDiverse() {
+        String[] types = {"PRIVATE", "GOVERNMENT", "NGO"};
+        String[] specializations = {"Bovine Specialist", "Small Animal Surgery", "Avian Expert"};
+        String[] districts = {"Pune", "Mumbai", "Satara"};
 
-        for (int i = 0; i < names.length; i++) {
-            ServiceProvider p = new ServiceProvider();
-            p.setName(names[i]);
-            p.setEmail("vet" + i + "@example.com");
-            p.setPassword("password");
-            p.setRole("Service Provider");
-            p.setDoctorType(types[i]);
-            p.setLatitude(coords[i][0]);
-            p.setLongitude(coords[i][1]);
-            p.setClinicName(names[i]);
-            p.setSpecialization("General Physician");
-            service.register(p);
+        for (String type : types) {
+            for (int i = 1; i <= 3; i++) {
+                ServiceProvider p = new ServiceProvider();
+                String name = "Dr. " + type.substring(0, 1) + type.substring(1).toLowerCase() + " " + i;
+                p.setName(name);
+                p.setEmail(type.toLowerCase() + i + "@example.com");
+                p.setPassword("password");
+                p.setRole("Service Provider");
+                p.setDoctorType(type);
+                p.setSpecialization(specializations[i-1]);
+                p.setClinicName(type + " Clinic " + i);
+                p.setConsultationFee(type.equals("GOVERNMENT") ? 0.0 : 500.0 * i);
+                p.setDistrict(districts[i-1]);
+                p.setLatitude(18.5 + (Math.random() * 0.5));
+                p.setLongitude(73.8 + (Math.random() * 0.5));
+                service.register(p);
+            }
         }
-        return "5 Sample Vets Seeded with Map Coordinates!";
+        return "9 Diverse Vets Seeded (3 Private, 3 Govt, 3 NGO)!";
     }
 }

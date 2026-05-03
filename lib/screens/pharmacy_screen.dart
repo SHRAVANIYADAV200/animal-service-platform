@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 class PharmacyScreen extends StatelessWidget {
@@ -13,9 +14,10 @@ class PharmacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(title: const Text("Animal Pharmacy")),
+      appBar: AppBar(title: Text(l.animalPharmacy)),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: medicines.length,
@@ -60,7 +62,7 @@ class PharmacyScreen extends StatelessWidget {
                         foregroundColor: AppTheme.primaryColor,
                         elevation: 0,
                       ),
-                      child: const Text("Buy", style: TextStyle(fontSize: 12)),
+                      child: Text(l.buy, style: const TextStyle(fontSize: 12)),
                     ),
                   ],
                 ),

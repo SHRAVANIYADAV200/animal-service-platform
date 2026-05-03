@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -17,42 +19,42 @@ class _ProviderListScreenState extends State<ProviderListScreen> {
   List filteredProviders = [];
   String filterType = "All";
   bool isLoading = true;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     loadProviders();
+    _timer = Timer.periodic(const Duration(seconds: 5), (t) => loadProviders(silent: true));
   }
 
-  void loadProviders() async {
-    setState(() => isLoading = true);
-    final data = await ApiService.getAllProviders();
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> loadProviders({bool silent = false}) async {
+    if (!silent) setState(() => isLoading = true);
+    final data = await ApiService.getAllProviders(type: filterType);
     if (mounted) {
       setState(() {
         allProviders = data;
-        _applyFilter();
+        filteredProviders = data;
         isLoading = false;
       });
     }
   }
 
   void _applyFilter() {
-    if (filterType == "All") {
-      filteredProviders = allProviders;
-    } else {
-      filteredProviders = allProviders.where((p) {
-        // If doctorType is null, we default to PRIVATE to match the UI fallback
-        String type = (p['doctorType'] ?? "PRIVATE").toString().toUpperCase();
-        return type == filterType.toUpperCase();
-      }).toList();
-    }
+    loadProviders();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(title: const Text("Find Doctors")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.findDoctors)),
       body: Column(
         children: [
           Container(
@@ -60,16 +62,23 @@ class _ProviderListScreenState extends State<ProviderListScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: ["All", "Private", "Government", "NGO"].map((type) {
-                bool isSelected = filterType == type;
+              children: [
+                {"key": "All", "label": AppLocalizations.of(context)!.all},
+                {"key": "Private", "label": AppLocalizations.of(context)!.private},
+                {"key": "Government", "label": AppLocalizations.of(context)!.government},
+                {"key": "NGO", "label": AppLocalizations.of(context)!.ngo},
+              ].map((filter) {
+                String key = filter['key'] as String;
+                String label = filter['label'] as String;
+                bool isSelected = filterType == key;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
-                    label: Text(type),
+                    label: Text(label),
                     selected: isSelected,
                     onSelected: (v) {
                       setState(() {
-                        filterType = type;
+                        filterType = key;
                         _applyFilter();
                       });
                     },
@@ -84,7 +93,7 @@ class _ProviderListScreenState extends State<ProviderListScreen> {
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : filteredProviders.isEmpty
-                    ? _emptyState()
+                    ? _emptyState(AppLocalizations.of(context)!)
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: filteredProviders.length,
@@ -123,15 +132,16 @@ class _ProviderListScreenState extends State<ProviderListScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(p['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(p['specialization'] ?? "Veterinary Specialist", style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                  Text(p['specialization'] ?? AppLocalizations.of(context)!.veterinarySpecialist, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       const Icon(Icons.star, color: Colors.amber, size: 14),
                       const SizedBox(width: 4),
-                      Text("${p['avgRating'] ?? 0.0}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text("${p['avgRating'] ?? 0.0} (${p['totalReviews'] ?? 0})", 
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      Text(p['doctorType'] ?? "PRIVATE", style: TextStyle(color: AppTheme.primaryColor.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.bold)),
+                      _typeBadge(p['doctorType'] ?? "PRIVATE"),
                     ],
                   ),
                 ],
@@ -147,9 +157,35 @@ class _ProviderListScreenState extends State<ProviderListScreen> {
     );
   }
 
-  Widget _emptyState() {
+  Widget _typeBadge(String type) {
+    Color color;
+    switch (type.toUpperCase()) {
+      case "GOVERNMENT":
+        color = Colors.blue;
+        break;
+      case "NGO":
+        color = Colors.orange;
+        break;
+      default:
+        color = AppTheme.primaryColor;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Text(
+        type.toUpperCase(),
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _emptyState(AppLocalizations l) {
     return Center(
-      child: Text("No doctors found", style: TextStyle(color: Colors.grey.shade400)),
+      child: Text(l.noDoctorsFound, style: TextStyle(color: Colors.grey.shade400)),
     );
   }
 }

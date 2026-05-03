@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import '../services/session.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_switcher.dart';
+import '../widgets/dashboard_widgets.dart';
 import 'map_screen.dart';
 import 'provider_list_screen.dart';
-import 'vaccination_screen.dart';
+import 'vaccination_list_screen.dart';
 import 'profile_screen.dart';
 import 'pharmacy_screen.dart';
 import 'consultation_detail_screen.dart';
+import 'bookings_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FarmerScreen extends StatefulWidget {
@@ -20,30 +24,41 @@ class FarmerScreen extends StatefulWidget {
 class _FarmerScreenState extends State<FarmerScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const FarmerHomeTab(),
-    const ProviderListScreen(),
-    const MapScreen(),
-    const ProfileScreen(),
+  final List<Widget> _pages = const [
+    FarmerHomeTab(),
+    ProviderListScreen(),
+    MapScreen(),
+    ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        indicatorColor: AppTheme.primaryColor.withOpacity(0.1),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: AppTheme.primaryColor), label: "Home"),
-          NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people, color: AppTheme.primaryColor), label: "Doctors"),
-          NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map, color: AppTheme.primaryColor), label: "Map"),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person, color: AppTheme.primaryColor), label: "Profile"),
+        onDestinationSelected: (index) =>
+            setState(() => _currentIndex = index),
+        indicatorColor: AppTheme.farmerPrimary.withOpacity(0.1),
+        destinations: [
+          NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home, color: AppTheme.farmerPrimary),
+              label: l.home),
+          NavigationDestination(
+              icon: const Icon(Icons.people_outline),
+              selectedIcon: const Icon(Icons.people, color: AppTheme.farmerPrimary),
+              label: l.doctors),
+          NavigationDestination(
+              icon: const Icon(Icons.map_outlined),
+              selectedIcon: const Icon(Icons.map, color: AppTheme.farmerPrimary),
+              label: l.map),
+          NavigationDestination(
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person, color: AppTheme.farmerPrimary),
+              label: l.profile),
         ],
       ),
     );
@@ -64,16 +79,16 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
   @override
   void initState() {
     super.initState();
-    loadBookings();
+    loadData();
   }
 
-  void loadBookings() async {
+  void loadData() async {
     final user = Session.currentUser;
     if (user != null) {
-      final data = await ApiService.getFarmerBookings(user['email']);
+      final bData = await ApiService.getFarmerBookings(user['email']);
       if (mounted) {
         setState(() {
-          bookings = data;
+          bookings = bData;
           isLoading = false;
         });
       }
@@ -82,31 +97,32 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final user = Session.currentUser;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: RefreshIndicator(
-        onRefresh: () async => loadBookings(),
+        onRefresh: () async => loadData(),
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 60, 24, 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Welcome back,", style: Theme.of(context).textTheme.bodyMedium),
-                        Text(user?['name'] ?? 'Farmer', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28)),
+                        const Text("Farmer Portal", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.farmerPrimary)),
+                        const LanguageSwitcher(),
                       ],
                     ),
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                      child: const Icon(Icons.person, color: AppTheme.primaryColor),
+                    const SizedBox(height: 20),
+                    AnimatedGreetingCard(
+                      name: user?['name']?.split(' ')[0] ?? 'Farmer',
+                      color: AppTheme.farmerPrimary,
+                      subtitle: "Manage your livestock and book vet services with ease.",
                     ),
                   ],
                 ),
@@ -118,53 +134,125 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Row(
+                    _buildStatsRow(l),
+                    const SizedBox(height: 32),
+                    
+                    // --- RECENT APPOINTMENTS (Moved Up) ---
+                    if (bookings.isNotEmpty) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(Icons.search, color: Colors.grey.shade400),
-                          const SizedBox(width: 12),
-                          Text("Search for doctors, services...", style: TextStyle(color: Colors.grey.shade400)),
+                          Text(l.recentAppointments, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          TextButton(
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsScreen())),
+                            child: const Text("View All", style: TextStyle(color: AppTheme.farmerPrimary, fontSize: 12)),
+                          ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 32),
-                    const Text("Our Services", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _buildQuickAction(context, "Consultation", Icons.medical_services, Colors.blue),
-                        _buildQuickAction(context, "Vaccination", Icons.vaccines, Colors.orange),
-                        _buildQuickAction(context, "Emergency", Icons.emergency, Colors.red),
-                        _buildQuickAction(context, "Pharmacy", Icons.local_pharmacy, Colors.teal),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text("Recent Appointments", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        TextButton(onPressed: () {}, child: const Text("View All")),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : bookings.isEmpty
-                            ? _buildEmptyState()
-                            : ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: bookings.length > 3 ? 3 : bookings.length,
-                                itemBuilder: (context, index) => _buildAppointmentCard(context, bookings[index]),
+                      const SizedBox(height: 8),
+                      // Show all appointments
+                      ...bookings.map((b) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                          color: Colors.white,
+                          child: ListTile(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ConsultationDetailScreen(booking: b),
                               ),
-                    const SizedBox(height: 24),
+                            ),
+                            contentPadding: const EdgeInsets.all(16),
+                            leading: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: AppTheme.farmerPrimary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                              child: const Icon(Icons.calendar_today, color: AppTheme.farmerPrimary),
+                            ),
+                            title: Text(b['serviceType'] ?? 'Service', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(b['providerEmail'] ?? 'Doctor Not Assigned Yet'),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  b['status'] ?? 'UNKNOWN',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: b['status'] == "PENDING"
+                                        ? Colors.orange
+                                        : b['status'] == "ACCEPTED"
+                                            ? Colors.green
+                                            : Colors.red,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  b['appointmentTime'] != null 
+                                    ? b['appointmentTime'].toString().contains('T') 
+                                      ? b['appointmentTime'].toString().split('T')[1].substring(0, 5) // Show HH:mm
+                                      : b['appointmentTime'].toString()
+                                    : "10:30 AM", // Fallback for testing or missing time
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ] else ...[
+                       const SizedBox(height: 8),
+                       Text(l.noActiveAppointments, style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+                    ],
+                    
+                    const SizedBox(height: 32),
+                    
+                    // --- OUR SERVICES (Moved Down) ---
+                    Text(l.ourServices, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.85,
+                      children: [
+                        DashboardTile(
+                          title: l.consultation,
+                          icon: Icons.medical_services,
+                          color: AppTheme.farmerPrimary,
+                          onTap: () => _handleServiceBooking("Consultation"),
+                        ),
+                        DashboardTile(
+                          title: l.vaccination,
+                          icon: Icons.vaccines,
+                          color: Colors.orange,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VaccinationListScreen())),
+                        ),
+                        DashboardTile(
+                          title: l.emergency,
+                          icon: Icons.emergency,
+                          color: Colors.red,
+                          onTap: () => _showEmergencySheet(context),
+                        ),
+                        DashboardTile(
+                          title: "Find Vet on Map",
+                          icon: Icons.map,
+                          color: Colors.blue,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen())),
+                        ),
+                        DashboardTile(
+                          title: "My Bookings",
+                          icon: Icons.calendar_month,
+                          color: Colors.teal,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsScreen())),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -175,99 +263,37 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
     );
   }
 
-  Widget _buildQuickAction(BuildContext context, String title, IconData icon, Color color) {
+  Widget _buildStatsRow(AppLocalizations l) {
+    return Row(
+      children: [
+        _statItem(bookings.length.toString(), "Bookings", Colors.orange),
+        const SizedBox(width: 12),
+        _statItem("0", "Vouchers", Colors.blue),
+      ],
+    );
+  }
+
+  Widget _statItem(String value, String label, Color color) {
     return Expanded(
-      child: InkWell(
-        onTap: () {
-          if (title == "Vaccination") {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const VaccinationScreen()));
-          } else if (title == "Pharmacy") {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const PharmacyScreen()));
-          } else if (title == "Emergency") {
-            _showEmergencySheet(context);
-          } else {
-            _handleServiceBooking(title);
-          }
-        },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.1)),
+        ),
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade100),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 8),
-            Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildAppointmentCard(BuildContext context, Map b) {
-    Color statusColor = Colors.orange;
-    if (b['status'] == "ACCEPTED") statusColor = Colors.green;
-    if (b['status'] == "REJECTED") statusColor = Colors.red;
-
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ConsultationDetailScreen(booking: b)),
-      ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.shade100)),
-        child: Row(
-          children: [
-            Container(
-              height: 48,
-              width: 48,
-              decoration: BoxDecoration(color: AppTheme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.calendar_today, color: AppTheme.primaryColor, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(b['serviceType'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(b['appointmentTime'] ?? "Schedule Pending", style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-              child: Text(b['status'], style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 11)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.shade100)),
-      child: Column(
-        children: [
-          Icon(Icons.calendar_month_outlined, size: 48, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text("No active appointments", style: TextStyle(color: Colors.grey.shade500)),
-        ],
       ),
     );
   }
 
   void _showEmergencySheet(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -277,15 +303,13 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Emergency Contacts", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
+            Text(l.emergencyContacts, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
             const SizedBox(height: 8),
-            const Text("Immediate help for your animals", style: TextStyle(color: Colors.grey)),
+            Text(l.immediateHelp, style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
-            _emergencyItem("Vet Emergency Helpline", "1800-VET-HELP", Icons.phone),
+            _emergencyItem(l.vetEmergencyHelpline, "1800-VET-HELP", Icons.phone),
             const SizedBox(height: 12),
-            _emergencyItem("District Veterinary Hospital", "011-2345-6789", Icons.local_hospital),
-            const SizedBox(height: 12),
-            _emergencyItem("Mobile Vet Clinic", "011-9876-5432", Icons.airport_shuttle),
+            _emergencyItem(l.districtVetHospital, "011-2345-6789", Icons.local_hospital),
             const SizedBox(height: 24),
           ],
         ),
@@ -312,11 +336,12 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
   }
 
   void _handleServiceBooking(String service) async {
+    final l = AppLocalizations.of(context)!;
     final user = Session.currentUser;
     await ApiService.createBooking(user!['email'], service);
-    loadBookings();
+    loadData();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("$service booking request sent!"), behavior: SnackBarBehavior.floating),
+      SnackBar(content: Text(l.bookingRequestSent(service)), behavior: SnackBarBehavior.floating),
     );
   }
 }

@@ -28,6 +28,7 @@ public class ServiceProvider {
     private String district;
     private String registrationNumber;
     private Double avgRating;
+    private Integer totalReviews = 0;
     @Column(columnDefinition = "TEXT")
     private String description;
     private String workingHours;
@@ -83,6 +84,9 @@ public class ServiceProvider {
 
     public Double getAvgRating() { return avgRating; }
     public void setAvgRating(Double avgRating) { this.avgRating = avgRating; }
+
+    public Integer getTotalReviews() { return totalReviews; }
+    public void setTotalReviews(Integer totalReviews) { this.totalReviews = totalReviews; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

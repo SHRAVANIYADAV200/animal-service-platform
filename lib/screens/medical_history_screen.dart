@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:animal1/l10n/app_localizations.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import 'consultation_detail_screen.dart';
+import '../services/session.dart';
 
 class MedicalHistoryScreen extends StatefulWidget {
-  final String farmerEmail;
-  const MedicalHistoryScreen({super.key, required this.farmerEmail});
+  final String? farmerEmail;
+  const MedicalHistoryScreen({super.key, this.farmerEmail});
 
   @override
   State<MedicalHistoryScreen> createState() => _MedicalHistoryScreenState();
@@ -22,7 +24,17 @@ class _MedicalHistoryScreenState extends State<MedicalHistoryScreen> {
   }
 
   Future<void> _loadHistory() async {
-    final data = await ApiService.getFarmerBookings(widget.farmerEmail);
+    final user = Session.currentUser;
+    final email = widget.farmerEmail ?? user?['email'];
+    if (email == null) return;
+
+    List data;
+    if (widget.farmerEmail != null || user?['role'] == "Farmer") {
+      data = await ApiService.getFarmerBookings(email);
+    } else {
+      data = await ApiService.getProviderBookings(email);
+    }
+
     setState(() {
       history = data.reversed.toList(); // Newest first
       isLoading = false;
@@ -37,8 +49,8 @@ class _MedicalHistoryScreenState extends State<MedicalHistoryScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Medical History"),
-            Text(widget.farmerEmail, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+          const Text("Medical History"),
+            Text(widget.farmerEmail ?? Session.currentUser?['email'] ?? "", style: const TextStyle(fontSize: 12, color: Colors.white70)),
           ],
         ),
       ),
@@ -114,7 +126,7 @@ class _MedicalHistoryScreenState extends State<MedicalHistoryScreen> {
         children: [
           Icon(Icons.history_outlined, size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text("No past appointments found", style: TextStyle(color: Colors.grey)),
+          Text(AppLocalizations.of(context)!.noPastAppointments, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
