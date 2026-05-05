@@ -12,6 +12,8 @@ import 'consultation_detail_screen.dart';
 import 'provider_schedule_tab.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'medical_history_screen.dart';
+import 'earnings_screen.dart';
+import 'forum_screen.dart';
 
 class ServiceProviderDashboard extends StatefulWidget {
   const ServiceProviderDashboard({super.key});
@@ -207,19 +209,23 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
                           title: "My Ratings",
                           icon: Icons.star,
                           color: Colors.amber,
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+                          onTap: () {
+                             context.findAncestorStateOfType<_ServiceProviderDashboardState>()?.setState(() {
+                              context.findAncestorStateOfType<_ServiceProviderDashboardState>()?._currentIndex = 3;
+                            });
+                          },
                         ),
                         DashboardTile(
                           title: "Q&A Forum",
                           icon: Icons.forum,
                           color: Colors.purple,
-                          onTap: () {},
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForumScreen())),
                         ),
                         DashboardTile(
                           title: "Earnings",
                           icon: Icons.payments,
                           color: Colors.green,
-                          onTap: () {},
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EarningsScreen())),
                         ),
                       ],
                     ),
@@ -335,29 +341,45 @@ class _ProviderHomeTabState extends State<ProviderHomeTab> {
   Widget _buildStatsRow(AppLocalizations l) {
     return Row(
       children: [
-        _statItem(stats['pending'].toString(), "Pending", Colors.orange),
+        _statItem(stats['pending'].toString(), "Pending", Colors.orange, () {
+           context.findAncestorStateOfType<_ServiceProviderDashboardState>()?.setState(() {
+            context.findAncestorStateOfType<_ServiceProviderDashboardState>()?._currentIndex = 1;
+          });
+        }),
         const SizedBox(width: 12),
-        _statItem(stats['accepted'].toString(), "Active", Colors.green),
+        _statItem(stats['accepted'].toString(), "Active", Colors.green, () {
+           context.findAncestorStateOfType<_ServiceProviderDashboardState>()?.setState(() {
+            context.findAncestorStateOfType<_ServiceProviderDashboardState>()?._currentIndex = 1;
+          });
+        }),
         const SizedBox(width: 12),
-        _statItem(providerProfile?['avgRating']?.toString() ?? "0.0", "Rating", Colors.amber),
+        _statItem(providerProfile?['avgRating']?.toString() ?? "0.0", "Rating", Colors.amber, () {
+           context.findAncestorStateOfType<_ServiceProviderDashboardState>()?.setState(() {
+            context.findAncestorStateOfType<_ServiceProviderDashboardState>()?._currentIndex = 3;
+          });
+        }),
       ],
     );
   }
 
-  Widget _statItem(String value, String label, Color color) {
+  Widget _statItem(String value, String label, Color color, VoidCallback onTap) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.1)),
-        ),
-        child: Column(
-          children: [
-            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-          ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withOpacity(0.1)),
+          ),
+          child: Column(
+            children: [
+              Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+              Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+            ],
+          ),
         ),
       ),
     );

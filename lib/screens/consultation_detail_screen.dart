@@ -8,6 +8,7 @@ import 'medical_history_screen.dart';
 import 'receipt_screen.dart';
 import 'rate_doctor_screen.dart';
 import 'package:intl/intl.dart';
+import '../services/razorpay_web_service.dart';
 
 class ConsultationDetailScreen extends StatefulWidget {
   final Map booking;
@@ -610,28 +611,18 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
             const SizedBox(height: 4),
             Text('${AppLocalizations.of(context)!.total}: ₹${totalCharge.toStringAsFixed(0)}', style: TextStyle(color: Colors.grey.shade500)),
             const SizedBox(height: 20),
-            _payOpt(Icons.account_balance, AppLocalizations.of(context)!.paymentOptionUPI, 'Razorpay — ${AppLocalizations.of(context)!.comingSoon}'),
+            _payOpt(
+              Icons.account_balance,
+              AppLocalizations.of(context)!.paymentOptionUPI,
+              'Pay via UPI, Card, or Netbanking',
+              onTap: () => _startRazorpayPayment(),
+            ),
             const SizedBox(height: 10),
-            _payOpt(Icons.credit_card, AppLocalizations.of(context)!.paymentOptionCard, 'Razorpay — ${AppLocalizations.of(context)!.comingSoon}'),
-            const SizedBox(height: 10),
-            _payOpt(Icons.currency_rupee, AppLocalizations.of(context)!.paymentOptionCash, AppLocalizations.of(context)!.confirmCashPaymentSmall),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(AppLocalizations.of(context)!.cashPaymentConfirmed),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  );
-                },
-                child: Text(AppLocalizations.of(context)!.confirmCashPayment),
-              ),
+            _payOpt(
+              Icons.currency_rupee,
+              AppLocalizations.of(context)!.paymentOptionCash,
+              AppLocalizations.of(context)!.confirmCashPaymentSmall,
+              onTap: () => _confirmCashPayment(),
             ),
           ]),
         ),
@@ -639,19 +630,117 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
     );
   }
 
-  Widget _payOpt(IconData icon, String title, String sub) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(10)),
-      child: Row(children: [
-        Icon(icon, color: AppTheme.primaryColor, size: 22),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          Text(sub, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-        ])),
-        const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
-      ]),
+  Future<void> _startRazorpayPayment() async {
+    Navigator.pop(context); // Close sheet
+    setState(() => isLoading = true);
+
+    try {
+      final orderData = await ApiService.createRazorpayOrder(
+        _bookingId,
+        totalCharge,
+        widget.booking['farmerEmail'],
+        widget.booking['providerEmail'],
+      );
+
+      if (orderData != null && orderData['success'] == true) {
+        RazorpayWebService.openCheckout(
+          options: {
+            'key': orderData['keyId'],
+            'amount': orderData['amount'],
+            'name': 'Animal Service Platform',
+            'description': 'Consultation Fee',
+            'order_id': orderData['orderId'],
+            'prefill': {
+              'email': widget.booking['farmerEmail'],
+            },
+          },
+          onSuccess: (paymentId, orderId, signature) async {
+            final verified = await ApiService.verifyPayment(orderId, paymentId, signature);
+            if (verified) {
+              _showSuccessSnackBar("Payment successful!");
+              _loadNotes(); // Refresh to show updated charges if needed
+            } else {
+              _showErrorSnackBar("Payment verification failed.");
+            }
+          },
+          onDismiss: () {
+            setState(() => isLoading = false);
+            _showErrorSnackBar("Payment cancelled.");
+          },
+        );
+      } else {
+        _showErrorSnackBar("Failed to create payment order.");
+      }
+    } catch (e) {
+      _showErrorSnackBar("An error occurred: $e");
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _confirmCashPayment() async {
+    Navigator.pop(context); // Close sheet
+    setState(() => isLoading = true);
+
+    try {
+      final success = await ApiService.recordCashPayment(
+        _bookingId,
+        totalCharge,
+        widget.booking['farmerEmail'],
+        widget.booking['providerEmail'],
+      );
+
+      if (success) {
+        _showSuccessSnackBar(AppLocalizations.of(context)!.cashPaymentConfirmed);
+        _loadNotes();
+      } else {
+        _showErrorSnackBar("Failed to record cash payment.");
+      }
+    } catch (e) {
+      _showErrorSnackBar("An error occurred: $e");
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  Widget _payOpt(IconData icon, String title, String sub, {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(10)),
+        child: Row(children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 22),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(sub, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          ])),
+          const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+        ]),
+      ),
     );
   }
 
@@ -752,9 +841,9 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('Your Earnings (via Platform)', style: TextStyle(color: Colors.white70, fontSize: 11)),
-          Text('₹${(totalCharge * 0.85).toStringAsFixed(0)}',
+          Text('₹${(totalCharge * 0.90).toStringAsFixed(0)}',
               style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          Text('After 15% fee from ₹${totalCharge.toStringAsFixed(0)}',
+          Text('After 10% fee from ₹${totalCharge.toStringAsFixed(0)}',
               style: const TextStyle(color: Colors.white60, fontSize: 10)),
         ])),
       ]),

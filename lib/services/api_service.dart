@@ -427,4 +427,93 @@ class ApiService {
     } catch (e) { debugPrint("Lookup error: $e"); }
     return ["Pune", "Mumbai", "Satara"];
   }
+
+  // 💳 PAYMENTS
+  static Future<Map<String, dynamic>?> createRazorpayOrder(int bookingId, double amount, String farmerEmail, String providerEmail) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/payments/create-order"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "bookingId": bookingId,
+          "amount": amount,
+          "farmerEmail": farmerEmail,
+          "providerEmail": providerEmail
+        }),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body);
+    } catch (e) {
+      debugPrint("Create order error: $e");
+    }
+    return null;
+  }
+
+  static Future<bool> verifyPayment(String orderId, String paymentId, String signature) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/payments/verify"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "razorpay_order_id": orderId,
+          "razorpay_payment_id": paymentId,
+          "razorpay_signature": signature
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["success"] == true;
+      }
+    } catch (e) {
+      debugPrint("Verify payment error: $e");
+    }
+    return false;
+  }
+
+  static Future<bool> recordCashPayment(int bookingId, double amount, String farmerEmail, String providerEmail) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/payments/cash"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "bookingId": bookingId,
+          "amount": amount,
+          "farmerEmail": farmerEmail,
+          "providerEmail": providerEmail
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint("Record cash payment error: $e");
+    }
+    return false;
+  }
+
+  static Future<Map<String, dynamic>?> getProviderEarnings(String email) async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/payments/earnings/$email"));
+      if (response.statusCode == 200) return jsonDecode(response.body);
+    } catch (e) {
+      debugPrint("Get earnings error: $e");
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> withdrawEarnings(String email, String upiId, double amount) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/payments/withdraw"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": email,
+          "upiId": upiId,
+          "amount": amount
+        }),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body);
+    } catch (e) {
+      debugPrint("Withdraw earnings error: $e");
+    }
+    return null;
+  }
 }
+

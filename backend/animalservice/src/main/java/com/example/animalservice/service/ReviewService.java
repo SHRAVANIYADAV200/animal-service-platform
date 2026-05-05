@@ -31,6 +31,10 @@ public class ReviewService {
             if (u != null) review.setUserId(u.getId());
         }
 
+        if (review.getProviderId() == 0) {
+            throw new RuntimeException("Cannot save review: Provider not found for email: " + review.getProviderEmail());
+        }
+
         Review saved = reviewRepository.save(review);
 
         // Recalculate average rating for the provider

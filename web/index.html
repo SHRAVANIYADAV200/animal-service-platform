@@ -32,6 +32,21 @@
   <title>animal1</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlPdlBM2Pl2h96LcjAeBg1IOfgJDuE6gA&libraries=places&v=weekly"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    function openRazorpay(options, onSuccess, onDismiss) {
+      options.handler = function(response) {
+        onSuccess(response.razorpay_payment_id, response.razorpay_order_id, response.razorpay_signature);
+      };
+      options.modal = {
+        ondismiss: function() {
+          onDismiss();
+        }
+      };
+      var rzp = new Razorpay(options);
+      rzp.open();
+    }
+  </script>
 </head>
 <body>
   <!--
