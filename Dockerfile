@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM maven:3.8.4-openjdk-17-slim AS build
+FROM maven:3.8.5-eclipse-temurin-17 AS build
 WORKDIR /app
 
 # Copy the pom.xml and download dependencies
@@ -14,7 +14,7 @@ WORKDIR /app/backend/animalservice
 RUN mvn clean package -DskipTests
 
 # Stage 2: Run
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # Copy the built jar
