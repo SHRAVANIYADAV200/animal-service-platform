@@ -144,9 +144,9 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
                       crossAxisCount: 3,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.85,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 1.2,
                       children: [
                         DashboardTile(
                           title: l.consultation,
