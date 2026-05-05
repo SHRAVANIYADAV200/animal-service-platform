@@ -137,7 +137,53 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
                     _buildStatsRow(l),
                     const SizedBox(height: 32),
                     
-                    // --- RECENT APPOINTMENTS (Moved Up) ---
+                    // --- OUR SERVICES ---
+                    Text(l.ourServices, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.85,
+                      children: [
+                        DashboardTile(
+                          title: l.consultation,
+                          icon: Icons.medical_services,
+                          color: AppTheme.farmerPrimary,
+                          onTap: () => _handleServiceBooking("Consultation"),
+                        ),
+                        DashboardTile(
+                          title: l.vaccination,
+                          icon: Icons.vaccines,
+                          color: Colors.orange,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VaccinationListScreen())),
+                        ),
+                        DashboardTile(
+                          title: l.emergency,
+                          icon: Icons.emergency,
+                          color: Colors.red,
+                          onTap: () => _showEmergencySheet(context),
+                        ),
+                        DashboardTile(
+                          title: "Find Vet on Map",
+                          icon: Icons.map,
+                          color: Colors.blue,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen())),
+                        ),
+                        DashboardTile(
+                          title: "My Bookings",
+                          icon: Icons.calendar_month,
+                          color: Colors.teal,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsScreen())),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // --- RECENT APPOINTMENTS ---
                     if (bookings.isNotEmpty) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -206,52 +252,6 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
                        const SizedBox(height: 8),
                        Text(l.noActiveAppointments, style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
                     ],
-                    
-                    const SizedBox(height: 32),
-                    
-                    // --- OUR SERVICES (Moved Down) ---
-                    Text(l.ourServices, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    GridView.count(
-                      crossAxisCount: 3,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.85,
-                      children: [
-                        DashboardTile(
-                          title: l.consultation,
-                          icon: Icons.medical_services,
-                          color: AppTheme.farmerPrimary,
-                          onTap: () => _handleServiceBooking("Consultation"),
-                        ),
-                        DashboardTile(
-                          title: l.vaccination,
-                          icon: Icons.vaccines,
-                          color: Colors.orange,
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VaccinationListScreen())),
-                        ),
-                        DashboardTile(
-                          title: l.emergency,
-                          icon: Icons.emergency,
-                          color: Colors.red,
-                          onTap: () => _showEmergencySheet(context),
-                        ),
-                        DashboardTile(
-                          title: "Find Vet on Map",
-                          icon: Icons.map,
-                          color: Colors.blue,
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MapScreen())),
-                        ),
-                        DashboardTile(
-                          title: "My Bookings",
-                          icon: Icons.calendar_month,
-                          color: Colors.teal,
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsScreen())),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 32),
                   ],
                 ),
