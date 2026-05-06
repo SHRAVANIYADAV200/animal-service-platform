@@ -344,8 +344,8 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
     DateTime? selectedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 1)),
-      firstDay: DateTime.now(),
-      lastDay: DateTime.now().add(const Duration(days: 30)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
       helpText: "Select Appointment Date",
     );
 
