@@ -26,11 +26,18 @@ public class BookingService {
         booking.setStatus("PENDING"); // default status
         Booking saved = repository.save(booking);
         
-        // 🔔 Notify all Doctors about new booking
-        providerRepository.findByRole("Service Provider").forEach(doc -> {
-            notificationService.sendToUser(doc.getEmail(), "New Booking Request", 
-                "A new " + saved.getServiceType() + " request is available.");
-        });
+        // 🔔 Notify Doctor(s)
+        if (saved.getProviderEmail() != null && !saved.getProviderEmail().isEmpty()) {
+            // Only notify the specific doctor
+            notificationService.sendToUser(saved.getProviderEmail(), "New Direct Booking", 
+                "A farmer has booked you specifically for " + saved.getServiceType());
+        } else {
+            // Notify all Doctors about general booking
+            providerRepository.findByRole("Service Provider").forEach(doc -> {
+                notificationService.sendToUser(doc.getEmail(), "New Booking Request", 
+                    "A new " + saved.getServiceType() + " request is available.");
+            });
+        }
         
         return saved;
     }
@@ -54,7 +61,17 @@ public class BookingService {
     public List<Booking> getProviderDashboardBookings(String email) {
         List<Booking> all = repository.findAll();
         return all.stream()
-            .filter(b -> b.getStatus().equals("PENDING") || email.equals(b.getProviderEmail()))
+            .filter(b -> {
+                // 1. Show if it is explicitly assigned to this doctor
+                if (email.equals(b.getProviderEmail())) return true;
+                
+                // 2. Show if it is PENDING and has NO assigned doctor yet (General request)
+                if (b.getStatus().equals("PENDING") && (b.getProviderEmail() == null || b.getProviderEmail().isEmpty())) {
+                    return true;
+                }
+                
+                return false;
+            })
             .collect(Collectors.toList());
     }
 
