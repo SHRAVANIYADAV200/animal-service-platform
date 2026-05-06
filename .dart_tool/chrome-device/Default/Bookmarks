@@ -1,0 +1,172 @@
+{
+   "checksum": "37597b539ea613c5ddcba1760a909c38",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "date_added": "13300828563503213",
+            "date_last_used": "13389872341490832",
+            "guid": "476c4a10-ec74-4fe4-a029-00ee8533abbe",
+            "id": "7",
+            "name": "Frontend Mentor | Front-end coding challenges using a real-life workflow",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://www.frontendmentor.io/",
+            "visit_count": 1
+         }, {
+            "date_added": "13303072754288314",
+            "date_last_used": "13389872341845176",
+            "guid": "e7557e7a-f36a-4b8c-8fce-d0a23c86ff97",
+            "id": "8",
+            "name": "Following A Web Design Process — Smashing Magazine",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://www.smashingmagazine.com/2011/06/following-a-web-design-process/",
+            "visit_count": 1
+         }, {
+            "date_added": "13323270489103937",
+            "date_last_used": "13389872341794273",
+            "guid": "cdfdea4e-0388-449d-b2fe-aabd29753f05",
+            "id": "9",
+            "name": "BANKNIFTY 39411.40 ▼ −0.39% Unnamed",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://in.tradingview.com/chart/BOwfClYQ/?symbol=NSE%3ABANKNIFTY",
+            "visit_count": 1
+         }, {
+            "date_added": "13323452563674429",
+            "date_last_used": "13389872340925127",
+            "guid": "b6b6301e-d3ab-4292-b5a8-e1710a1d5292",
+            "id": "10",
+            "name": "NIFTY: 16985.6 (0.08%) @ NSE",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://gocharting.com/terminal?ticker=NSE%3ANIFTY",
+            "visit_count": 1
+         }, {
+            "date_added": "13329292082203273",
+            "date_last_used": "13389872343112122",
+            "guid": "dc01448f-3009-4d68-92f4-6c0b8a3e64ef",
+            "id": "11",
+            "name": "Option Chain - NSE India",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://www.nseindia.com/option-chain",
+            "visit_count": 1
+         }, {
+            "date_added": "13357251966809831",
+            "date_last_used": "0",
+            "guid": "f800702e-e1db-4363-8e4a-6c4968526639",
+            "id": "12",
+            "name": "Legacy JavaScript Algorithms and Data Structures Certification | freeCodeCamp.org",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/",
+            "visit_count": 0
+         }, {
+            "date_added": "13363187418563291",
+            "date_last_used": "13389872341384593",
+            "guid": "3bd363bc-8c80-4053-97ce-e072b89e55c0",
+            "id": "13",
+            "name": "Devops",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://whimsical.com/devops-8fbd8dDwU9rZzbRJDJSTE9",
+            "visit_count": 1
+         }, {
+            "date_added": "13363192051460366",
+            "date_last_used": "13389872348375054",
+            "guid": "fad9e2b6-74b9-4a5f-b043-ddf6068bb33c",
+            "id": "14",
+            "name": "Hiten Codes Resources | Instagram | Linktree",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://linktr.ee/hiten.codes",
+            "visit_count": 1
+         }, {
+            "date_added": "13363634055695056",
+            "date_last_used": "13389872341740162",
+            "guid": "b754bb2e-910c-44f0-b520-8362e005b4ae",
+            "id": "15",
+            "name": "btst 2024-06-23, Technical Analysis Scanner",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://chartink.com/screener/btst-2024-06-23-9",
+            "visit_count": 1
+         }, {
+            "date_added": "13366806256032007",
+            "date_last_used": "13389872342268080",
+            "guid": "d0aa2021-0c5c-4ab5-aeff-23ed3af52522",
+            "id": "16",
+            "name": "Quick Start | Soft UI Dashboard React @ Creative Tim",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://www.creative-tim.com/learning-lab/react/quick-start/soft-ui-dashboard/?_ga=2.162110396.169341241.1722331372-1448545955.1722331372",
+            "visit_count": 1
+         }, {
+            "date_added": "13346689990798272",
+            "date_last_used": "0",
+            "guid": "13a542ab-14e2-432c-af7e-ee3beb2dc3ed",
+            "id": "17",
+            "name": "Adobe Acrobat",
+            "show_icon": false,
+            "source": "sync",
+            "type": "url",
+            "url": "https://acrobat.adobe.com/?x_api_client_id=bookmark&x_api_client_location=Reader",
+            "visit_count": 0
+         } ],
+         "date_added": "13422556079021244",
+         "date_last_used": "0",
+         "date_modified": "13366806256032007",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Favorites bar",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13422556079021244",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Other favorites",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13422556079021244",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Mobile favorites",
+         "source": "unknown",
+         "type": "folder"
+      },
+      "workspaces_v2": {
+         "children": [  ],
+         "date_added": "13422556079021244",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "75aa6670-344f-549d-b742-660f029506ab",
+         "id": "5",
+         "name": "Workspaces",
+         "source": "unknown",
+         "type": "folder"
+      }
+   },
+   "sync_metadata": "CkEKHgiIgQISCGIj9f2dAQAAKg4QABgBIAAoBjAAOABAABIAKhhuZEFuRkZzQWtSckVLMEx6ZXZCTkJBPT1IA6AGDBKuAQgREqkBChxEVVpDYjIyckwxVU9PNkpEVkxOb1cyWWNTVDA9EiQxM2E1NDJhYi0xNGUyLTQzMmMtYWY3ZS1lZTNiZWIyZGMzZWQYACAAKAAw1p7UrZcyOPmn1K2XMkD5p9StlzJKHFl0Z2RoaFNOSGo4V3VFalZkeG4yNERYT0xYTT1aICIe/7xVcUY5Q0krNE1walFpUlpwK29tb1VJRFp3am89ZQAAAADCPgJgBRKtAQgPEqgBChxOc2RvS0hpdDV4RmZQWVRIdmtnbFA2cWdDTTA9EiRiNzU0YmIyZS05MTBjLTQ0ZjAtYjUyMC04MzYyZTAwNWI0YWUYACAAKAAwrPnJrIkzOM6n1K2XMkDOp9StlzJKHGxxTWZycWFVU2tpcW9oRmErbTB1RExsWkZUMD1aHyId/kkvcXE0K2hOUjh6TnJpb3gxeTJOdG9yYmdaZz1lGBYU+8I+AmAFEo4BCAISiQEKHFljU1RvbnZFU1B3cUNzNEwyY3JWaHY2OEw5OD0SJGRkMzRmMGUxLThmNjItNWJlOS1iODE1LWNkZTYzMTFmNzNmMxgAIAAoADDDzPTD9zE4g9H0w/cxQIPR9MP3MUocb1BWa2h3QlJiVjY1S0NXUjIrSU9OSFdvT3U4PVoAZQAAAADCPgJgABKtAQgOEqgBChxLc3QyU0pEVktDVXpJWmJLNzFvT1JLMy91aG89EiRmYWQ5ZTJiNi03NGI5LTRhNWYtYjA0My1kZGY2MDY4YmIzM2MYACAAKAAwq/nJrIkzOLin1K2XMkC4p9StlzJKHDVHc01qU0dBS2ZjOUtCU3RkbWxVNVVxaE1FST1aHyId/UZqcTVVYWNjK1hob2dNK1NDaDBVeWlYRy9HVT1lf8jIlMI+AmAFEq0BCAoSqAEKHGhLaDE1cXRxOUc3ZFV3V3N6eERFWHRReGRTZz0SJGI2YjYzMDFlLWQzYWItNDI5Mi1iNWE4LWUxNzEwYTFkNTI5MhgAIAAoADCx+cmsiTM4yJPUrZcyQMiT1K2XMkocTU9GZnEvSnhuaVNGWkdzYVI3dkZrY3g5QUtBPVofIh3cQUdJZDVsOEFYdVA3YStNL09GbmdOR0pDMkkwPWV21Hb8wj4CYAUSrQEICRKoAQocN2NWcHRDNWlxbkFOQ3JLQzdFOEtXam5Kc2tBPRIkY2RmZGVhNGUtMDM4OC00NDlkLWIyZmUtYWFiZDI5NzUzZjA1GAAgACgAMK/5yayJMziMp9StlzJAjKfUrZcyShxXOU9paWZMZnBCT0QrODhwYjIxbDdPQmxpSVE9Wh8iHblDR21hRVJENkNBdGVEMDY1U0RjVzhJNDllbUk9ZYKwkA/CPgJgBRKOAQgFEokBChx3UkJyWkwrNlBBOWF2S2dqTlA3SlhETGNmdnM9EiRhODgyMDcyZi04YTdjLTU4N2QtOGRkNS1kOTQwMWNiNDdkYzgYACAAKAAwrbOfrKQzOOu1n6ykM0DrtZ+spDNKHG5teDY1c1FEdnhJOFRnRWV2K0ErbnR0b1NuND1aAGUAAAAAwj4CYAASrQEIDBKoAQocSkQ2dnhjY0luYlgyV1FXb2NkTHJsaWNtWHZzPRIkZjgwMDcwMmUtZTFkYi00MzYzLThlNGEtNmM0OTY4NTI2NjM5GAAgACgAMNWe1K2XMjjkp9StlzJA5KfUrZcyShxYcTZKQ0x0NnBXcEZOQ3dSMGJvYXVVMXc1azQ9Wh8iHfdpYm1XakluWVVEQkNxLzh2OFR3QjFFbzZBUnc9ZXeJIu3CPgJgBRKtAQgLEqgBChxqVVo3ZDNvWlRPS2ZSek43NC9DemN6S1JNVFE9EiRkYzAxNDQ4Zi0zMDA5LTRkNjgtOTJmNC02YzBiOGEzZTY0ZWYYACAAKAAwsPnJrIkzOLCT1K2XMkCwk9StlzJKHG42bkxZOTVzWVVDVjVycUZOdHdNNEZSTUgrVT1aHyId7khKdDFTK1VuRzZleitjSHdQRjZ4c1FnV2NLWT1lKDjlfsI+AmAFEqwBCAcSpwEKHFlmWkovR2hpUHhBTjdFVWVQYmlDMEhyS0c0dz0SJDQ3NmM0YTEwLWVjNzQtNGZlNC1hMDI5LTAwZWU4NTMzYWJiZRgAIAAoADCt+cmsiTM4l5PUrZcyQJeT1K2XMkocUkY2QmFyd1BUVCtYcXNLbE80RkNnZWRUenRrPVoeIhxIZ2dWMGxQZ2pHWW5XaW5JekllMGo0cjZpUmM9ZZin0GjCPgJgBRKtAQgQEqgBChxaV0s3dHE4Ri8rSldqOEZweUJueFltREF5c009EiRkMGFhMjAyMS0wYzVjLTRhYjUtYWVmZi0yM2VkM2FmNTI1MjIYACAAKAAwsvnJrIkzOP6S1K2XMkD+ktStlzJKHE9sRHdxTjg3SHREdVlRSlpkVFNqeXhuczlBdz1aHyId/3lrUDl2MGRwbVRuNXY0VnpBbEF4RVNKRzRUTT1lSk7FmsI+AmAFEq0BCA0SqAEKHGQ2QXlCcG95TlVSK051YUhxSjZmbzNJcnBKUT0SJDNiZDM2M2JjLThjODAtNDA1My05N2NlLWUwNzJiODllNTVjMBgAIAAoADCu+cmsiTM4oqfUrZcyQKKn1K2XMkocUGEvL3N3M2R4N2UvVVluQzdHZG5lSXoyNnJZPVofIh37bkZNNVBHczU2OXhhaFBpNys1ZGdYaVRRdGM0PWVa+NAuwj4CYAUSjgEIAxKJAQocbmpnRHU4OGVDcnZYcDg2cEQ3ZkhHY3FGcDg4PRIkNTlhZjc5MjgtOTQzNi01ZTllLTk0NzQtZThkZWY1Y2M4Y2NmGAAgACgAMMjM9MP3MTi10fTD9zFAtdH0w/cxShx5ek5CMDFjbjU0QTdjUlUwdVQrL1BnbVR0VW89WgBlAAAAAMI+AmAAEo4BCAESiQEKHHl4Si82ZnZrZWNyN2twNUVRekI0dFdMcGRiRT0SJDBmNGNlMTJiLWI0MzEtNTg1OC1iZWYyLWUxNDAzNTJiMmZlMBgAIAAoADDCzPTD9zE46tD0w/cxQOrQ9MP3MUocYVJDV0xnaEY5YjVJbnFLSUR2dUovanZRa0ZjPVoAZQAAAADCPgJgABKsAQgIEqcBChxYMm9jSmlSMS9Na3J6U0xzWlhPMDg3amFkVTQ9EiRlNzU1N2U3YS1mMzZhLTRiOGMtOGZjZS1kMGEyM2M4NmZmOTcYACAAKAAws/nJrIkzONyS1K2XMkDcktStlzJKHGF6YXhycUU0clFlRHgvejNSenU1MDNDNmdYcz1aHiIccnNqWjFBSkw2QXY5Q0NiU3RKM2M2QWpMQ3hzPWU6hCBJwj4CYAUwADgA",
+   "version": 1
+}
