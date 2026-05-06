@@ -62,8 +62,8 @@ public class BookingService {
         List<Booking> all = repository.findAll();
         return all.stream()
             .filter(b -> {
-                // 1. Show if it is explicitly assigned to this doctor
-                if (email.equals(b.getProviderEmail())) return true;
+                // 1. Show if it is explicitly assigned to this doctor (Case Insensitive)
+                if (b.getProviderEmail() != null && email.equalsIgnoreCase(b.getProviderEmail())) return true;
                 
                 // 2. Show if it is PENDING and has NO assigned doctor yet (General request)
                 if (b.getStatus().equals("PENDING") && (b.getProviderEmail() == null || b.getProviderEmail().isEmpty())) {
@@ -81,7 +81,6 @@ public class BookingService {
         b.setStatus(status);
         
         if (status.equals("ACCEPTED")) {
-            b.setAppointmentTime("10:30 AM");
             b.setProviderEmail(providerEmail);
             
             // 🔔 Notify Farmer
