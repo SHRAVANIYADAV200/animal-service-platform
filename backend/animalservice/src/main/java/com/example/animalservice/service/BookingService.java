@@ -92,6 +92,16 @@ public class BookingService {
         return repository.save(b);
     }
 
+    @Autowired
+    private com.example.animalservice.repository.ConsultationNoteRepository noteRepository;
+
+    // Delete booking and its notes
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteBooking(int id) {
+        noteRepository.deleteByBookingId(id);
+        repository.deleteById(id);
+    }
+
     // Get booking stats for a specific provider
     public Map<String, Long> getProviderStats(String email) {
         List<Booking> providerBookings = repository.findByProviderEmail(email);

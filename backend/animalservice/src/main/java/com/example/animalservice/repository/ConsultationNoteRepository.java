@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface ConsultationNoteRepository extends JpaRepository<ConsultationNote, Integer> {
     List<ConsultationNote> findByBookingIdOrderByCreatedAtAsc(int bookingId);
+    
+    @org.springframework.transaction.annotation.Transactional
+    void deleteByBookingId(int bookingId);
 }

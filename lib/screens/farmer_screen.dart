@@ -338,10 +338,53 @@ class _FarmerHomeTabState extends State<FarmerHomeTab> {
   void _handleServiceBooking(String service) async {
     final l = AppLocalizations.of(context)!;
     final user = Session.currentUser;
-    await ApiService.createBooking(user!['email'], service);
-    loadData();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l.bookingRequestSent(service)), behavior: SnackBarBehavior.floating),
+    if (user == null) return;
+
+    // 1. Pick Date
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDay: DateTime.now(),
+      lastDay: DateTime.now().add(const Duration(days: 30)),
+      helpText: "Select Appointment Date",
     );
+
+    if (selectedDate == null) return;
+
+    // 2. Pick Time
+    TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 10, minute: 30),
+      helpText: "Select Appointment Time",
+    );
+
+    if (selectedTime == null) return;
+
+    if (!mounted) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final dateStr = selectedDate.toString().split(' ')[0];
+    final timeStr = "${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')} ${selectedTime.period == DayPeriod.am ? 'AM' : 'PM'}";
+
+    await ApiService.createBooking(
+      user['email'], 
+      service,
+      date: dateStr,
+      time: timeStr,
+    );
+    
+    if (mounted) {
+      Navigator.pop(context); // Close loading
+      loadData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.bookingRequestSent(service)), behavior: SnackBarBehavior.floating),
+      );
+    }
   }
 }

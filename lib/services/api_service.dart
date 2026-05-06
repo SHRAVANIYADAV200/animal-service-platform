@@ -209,6 +209,16 @@ class ApiService {
   }
 
   // 💬 CONSULTATIONS (Interactions)
+  static Future<bool> deleteBooking(int id) async {
+    try {
+      final response = await http.delete(Uri.parse("$baseUrl/bookings/delete/$id"));
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint("Delete booking error: $e");
+    }
+    return false;
+  }
+
   static Future<List<dynamic>> getConsultationNotes(int bookingId) async {
     try {
       final response = await http.get(Uri.parse("$baseUrl/consultations/notes/$bookingId"));

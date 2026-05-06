@@ -33,12 +33,12 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
     if (email == null) return;
 
     final bData = await ApiService.getProviderBookings(email);
-    // Filter by accepted status
-    final accepted = bData.where((b) => b['status'] == "ACCEPTED").toList();
+    // Show both Pending and Accepted in schedule
+    final relevant = bData.where((b) => b['status'] == "ACCEPTED" || b['status'] == "PENDING").toList();
     
     if (mounted) {
       setState(() {
-        allBookings = accepted;
+        allBookings = relevant;
         isAvailable = user?['isAvailable'] ?? true;
         _filterBookings();
         isLoading = false;
@@ -145,20 +145,24 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
   }
 
   Widget _buildScheduleItem(Map b) {
+    bool isPending = b['status'] == "PENDING";
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: isPending ? Colors.orange.withOpacity(0.3) : Colors.grey.shade100),
+        boxShadow: isPending ? [BoxShadow(color: Colors.orange.withOpacity(0.05), blurRadius: 10)] : null,
       ),
       child: Row(
         children: [
           Column(
             children: [
-              Text(b['appointmentTime']?.split(' ')[0] ?? "09:00", style: const TextStyle(fontWeight: FontWeight.bold)),
-              const Text("AM", style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text(b['appointmentTime']?.split(' ')[0] ?? "09:00", 
+                style: TextStyle(fontWeight: FontWeight.bold, color: isPending ? Colors.orange : Colors.black)),
+              Text(b['appointmentTime']?.contains('PM') ?? false ? "PM" : "AM", 
+                style: const TextStyle(fontSize: 10, color: Colors.grey)),
             ],
           ),
           const SizedBox(width: 16),
@@ -168,7 +172,19 @@ class _ProviderScheduleTabState extends State<ProviderScheduleTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(b['serviceType'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    Text(b['serviceType'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    if (isPending) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                        child: const Text("PENDING", style: TextStyle(fontSize: 8, color: Colors.orange, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ],
+                ),
                 Text(b['farmerEmail'], style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
               ],
             ),

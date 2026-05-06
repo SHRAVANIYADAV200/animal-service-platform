@@ -52,6 +52,11 @@ public class BookingController {
         return bookingService.getStats();
     }
 
+    @DeleteMapping("/delete/{id}")
+    public void deleteBooking(@PathVariable int id) {
+        bookingService.deleteBooking(id);
+    }
+
     @GetMapping("/test")
     public String test() {
         return "BOOKING API WORKING";

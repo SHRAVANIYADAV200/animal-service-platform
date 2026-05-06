@@ -204,6 +204,35 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
     }
   }
 
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Appointment?"),
+        content: const Text("This will permanently remove this appointment and all its records. This action cannot be undone."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() => isLoading = true);
+              final success = await ApiService.deleteBooking(_bookingId);
+              if (success && mounted) {
+                Navigator.pop(context, true); // Go back to dashboard with 'true' to refresh
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Appointment deleted successfully")));
+              } else if (mounted) {
+                setState(() => isLoading = false);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to delete appointment")));
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -233,6 +262,11 @@ class _ConsultationDetailScreenState extends State<ConsultationDetailScreen> {
                 ),
                 tooltip: "Medical History",
               ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              tooltip: "Delete Appointment",
+              onPressed: () => _confirmDelete(context),
+            ),
             IconButton(
               icon: const Icon(Icons.receipt_long_outlined, color: AppTheme.primaryColor),
               tooltip: AppLocalizations.of(context)!.viewBillTooltip,
